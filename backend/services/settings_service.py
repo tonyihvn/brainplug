@@ -107,6 +107,11 @@ class SettingsService:
         1. Connect and extract schema
         2. Extract sample data
         3. Generate business rules
+        
+        When activating a new database:
+        - Old active database's RAG entries are cleared
+        - Old database is deactivated
+        - New database's schema and rules are extracted to RAG
         """
         try:
             # Test connection first
@@ -129,9 +134,26 @@ class SettingsService:
                     {**existing, **{k: v for k, v in settings_data.items() if k != 'id'}}
                 )
                 
-                # If transitioning from inactive to active, populate RAG
+                # If transitioning from inactive to active, clear old data and populate RAG
                 if not was_active and is_now_active:
-                    logger.info(f"Database {settings_data['name']} activated - extracting schema and rules")
+                    logger.info(f"Database {settings_data['name']} activated - clearing old RAG data and extracting new schema")
+                    
+                    # Find and deactivate any other active database
+                    all_settings = self.rag_db.get_all_database_settings() or []
+                    for other_setting in all_settings:
+                        if other_setting.get('is_active') and other_setting.get('id') != existing_id:
+                            old_db_id = other_setting.get('id')
+                            logger.info(f"Deactivating previously active database: {other_setting.get('name')}")
+                            
+                            # Wipe RAG entries for the old database
+                            self._wipe_rag_schema(old_db_id)
+                            
+                            # Deactivate the old database
+                            other_setting['is_active'] = False
+                            self.rag_db.save_database_setting(old_db_id, other_setting)
+                            logger.info(f"[OK] Deactivated old database: {other_setting.get('name')}")
+                    
+                    # Populate RAG with new database schema
                     self._populate_rag_schema(updated)
                     
                     # Update .env file with new DATABASE_URL
@@ -152,6 +174,8 @@ class SettingsService:
             else:
                 # Create new
                 new_id = str(uuid.uuid4())
+                is_active = settings_data.get('is_active', False)
+                
                 new_setting = {
                     'id': new_id,
                     'name': settings_data['name'],
@@ -161,15 +185,32 @@ class SettingsService:
                     'database': settings_data['database'],
                     'username': settings_data.get('username'),
                     'password': settings_data.get('password'),
-                    'is_active': settings_data.get('is_active', False),
+                    'is_active': is_active,
                     'created_at': datetime.now().isoformat()
                 }
                 
                 self.rag_db.save_database_setting(new_id, new_setting)
                 
-                # If this is active, populate RAG immediately
-                if new_setting['is_active']:
-                    logger.info(f"New database {new_setting['name']} is active - extracting schema and rules")
+                # If this is active, clear old data and populate RAG immediately
+                if is_active:
+                    logger.info(f"New database {new_setting['name']} is active - clearing old RAG data and extracting schema")
+                    
+                    # Find and deactivate any currently active database
+                    all_settings = self.rag_db.get_all_database_settings() or []
+                    for other_setting in all_settings:
+                        if other_setting.get('is_active') and other_setting.get('id') != new_id:
+                            old_db_id = other_setting.get('id')
+                            logger.info(f"Deactivating previously active database: {other_setting.get('name')}")
+                            
+                            # Wipe RAG entries for the old database
+                            self._wipe_rag_schema(old_db_id)
+                            
+                            # Deactivate the old database
+                            other_setting['is_active'] = False
+                            self.rag_db.save_database_setting(old_db_id, other_setting)
+                            logger.info(f"[OK] Deactivated old database: {other_setting.get('name')}")
+                    
+                    # Populate RAG with new database schema
                     self._populate_rag_schema(new_setting)
                     
                     # Update .env file with new DATABASE_URL
@@ -331,19 +372,28 @@ class SettingsService:
         try:
             logger.info(f"Wiping RAG entries for database: {database_id}")
             
+            schemas_deleted = 0
+            rules_deleted = 0
+            
             # Remove schemas for this database
             schemas = self.rag_db.get_all_schemas() or []
             for schema in schemas:
-                if schema.get('db_id') == database_id:
-                    self.rag_db.delete_schema(schema.get('id'))
+                # Check both 'db_id' (legacy) and 'database_id' (current)
+                schema_metadata = schema.get('metadata', {})
+                if schema_metadata.get('database_id') == database_id or schema_metadata.get('db_id') == database_id:
+                    if self.rag_db.delete_schema(schema.get('id')):
+                        schemas_deleted += 1
             
             # Remove business rules for this database
             rules = self.rag_db.get_all_rules() or []
             for rule in rules:
-                if rule.get('db_id') == database_id:
-                    self.rag_db.delete_rule(rule.get('id'))
+                # Check both 'db_id' (legacy) and 'database_id' (current)
+                rule_metadata = rule.get('metadata', {})
+                if rule_metadata.get('database_id') == database_id or rule_metadata.get('db_id') == database_id:
+                    if self.rag_db.delete_rule(rule.get('id')):
+                        rules_deleted += 1
             
-            logger.info(f"[OK] Wiped RAG entries for database: {database_id}")
+            logger.info(f"[OK] Wiped RAG entries for database: {database_id} (Schemas: {schemas_deleted}, Rules: {rules_deleted})")
         except Exception as e:
             logger.error(f"Error wiping RAG schema: {str(e)}")
     

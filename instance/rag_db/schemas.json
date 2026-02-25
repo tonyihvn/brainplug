@@ -1,5 +1,54 @@
 [
   {
+    "id": "db-2-products_products_schema",
+    "content": "Products table schema",
+    "metadata": {
+      "database_id": "db-2-products",
+      "table_name": "products"
+    }
+  },
+  {
+    "id": "db-2-products_inventory_schema",
+    "content": "Inventory table schema",
+    "metadata": {
+      "database_id": "db-2-products",
+      "table_name": "inventory"
+    }
+  },
+  {
+    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_action_history_schema",
+    "content": "Table: action_history\n\nColumns:\n  - id (VARCHAR(36))\n  - conversation_id (VARCHAR(36), nullable)\n  - action_type (VARCHAR(50))\n  - action_data (LONGTEXT)\n  - result (LONGTEXT, nullable)\n  - status (VARCHAR(50), nullable)\n  - error_message (TEXT, nullable)\n  - executed_at (DATETIME, nullable)\n\nPrimary Key: id",
+    "metadata": {
+      "table_name": "action_history",
+      "type": "schema",
+      "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
+      "category": "action_history_schema"
+    },
+    "embedding": null
+  },
+  {
+    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_api_configs_schema",
+    "content": "Table: api_configs\n\nColumns:\n  - id (VARCHAR(36))\n  - name (VARCHAR(255))\n  - api_type (VARCHAR(50))\n  - endpoint (VARCHAR(500))\n  - method (VARCHAR(20), nullable)\n  - headers (LONGTEXT, nullable)\n  - auth_type (VARCHAR(50), nullable)\n  - auth_value (VARCHAR(500), nullable)\n  - params_template (LONGTEXT, nullable)\n  - created_at (DATETIME, nullable)\n\nPrimary Key: id",
+    "metadata": {
+      "table_name": "api_configs",
+      "type": "schema",
+      "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
+      "category": "api_configs_schema"
+    },
+    "embedding": null
+  },
+  {
+    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_business_rules_schema",
+    "content": "Table: business_rules\n\nColumns:\n  - id (VARCHAR(36))\n  - name (VARCHAR(255))\n  - description (TEXT, nullable)\n  - rule_type (VARCHAR(50))\n  - content (TEXT)\n  - category (VARCHAR(100), nullable)\n  - is_active (TINYINT, nullable)\n  - created_at (DATETIME, nullable)\n\nPrimary Key: id",
+    "metadata": {
+      "table_name": "business_rules",
+      "type": "schema",
+      "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
+      "category": "business_rules_schema"
+    },
+    "embedding": null
+  },
+  {
     "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_conversations_schema",
     "content": "Table: conversations\n\nColumns:\n  - id (VARCHAR(36))\n  - title (VARCHAR(255), nullable)\n  - created_at (DATETIME, nullable)\n  - updated_at (DATETIME, nullable)\n\nPrimary Key: id",
     "metadata": {
@@ -11,189 +60,46 @@
     "embedding": null
   },
   {
-    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_dcdistributions_schema",
-    "content": "Table: dcdistributions\n\nColumns:\n  - id (BIGINT)\n  - item_id (BIGINT) [dctools]\n  - quantity_sent (DOUBLE, nullable, default=0.00)\n  - date_sent (DATE, nullable)\n  - sent_from (BIGINT) [facilities]\n  - sentfrom_state (VARCHAR(30) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - sent_to (BIGINT) [facilities]\n  - sentto_state (VARCHAR(30) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - documents (VARCHAR(80) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - remarks (VARCHAR(80) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - sent_by (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - received_by (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - batchno (VARCHAR(80) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - rdocuments (VARCHAR(80) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - rremarks (VARCHAR(80) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - quantity_received (DOUBLE, nullable, default=0.00)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
+    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_database_settings_schema",
+    "content": "Table: database_settings\n\nColumns:\n  - id (VARCHAR(36))\n  - name (VARCHAR(255))\n  - db_type (VARCHAR(50))\n  - host (VARCHAR(255), nullable)\n  - port (INTEGER, nullable)\n  - database (VARCHAR(255))\n  - username (VARCHAR(255), nullable)\n  - password (VARCHAR(255), nullable)\n  - is_active (TINYINT, nullable)\n  - created_at (DATETIME, nullable)\n\nPrimary Key: id",
     "metadata": {
-      "table_name": "dcdistributions",
+      "table_name": "database_settings",
       "type": "schema",
       "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
-      "category": "dcdistributions_schema"
+      "category": "database_settings_schema"
     },
     "embedding": null
   },
   {
-    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_dcstocks_schema",
-    "content": "Table: dcstocks\n\nColumns:\n  - id (BIGINT)\n  - item_id (BIGINT) [dctools]\n  - quantity_remaining (DOUBLE, nullable, default=0.00)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
+    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_llm_models_schema",
+    "content": "Table: llm_models\n\nColumns:\n  - id (VARCHAR(36))\n  - name (VARCHAR(255))\n  - model_type (VARCHAR(50))\n  - model_id (VARCHAR(255))\n  - api_key (VARCHAR(500), nullable)\n  - api_endpoint (VARCHAR(500), nullable)\n  - priority (INTEGER, nullable)\n  - is_active (TINYINT, nullable)\n  - config (LONGTEXT, nullable)\n  - created_at (DATETIME, nullable)\n\nPrimary Key: id",
     "metadata": {
-      "table_name": "dcstocks",
+      "table_name": "llm_models",
       "type": "schema",
       "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
-      "category": "dcstocks_schema"
+      "category": "llm_models_schema"
     },
     "embedding": null
   },
   {
-    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_dcsupplies_schema",
-    "content": "Table: dcsupplies\n\nColumns:\n  - id (BIGINT)\n  - item_id (BIGINT) [dctools]\n  - quantity_supplied (DOUBLE, nullable, default=0.00)\n  - date_supplied (DATE, nullable)\n  - supplied_to (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - supplier (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - batchno (VARCHAR(30) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - remarks (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
+    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_messages_schema",
+    "content": "Table: messages\n\nColumns:\n  - id (VARCHAR(36))\n  - conversation_id (VARCHAR(36)) [conversations]\n  - role (VARCHAR(20))\n  - content (TEXT)\n  - action_data (LONGTEXT, nullable)\n  - action_executed (TINYINT, nullable)\n  - action_result (LONGTEXT, nullable)\n  - created_at (DATETIME, nullable)\n\nPrimary Key: id",
     "metadata": {
-      "table_name": "dcsupplies",
+      "table_name": "messages",
       "type": "schema",
       "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
-      "category": "dcsupplies_schema"
+      "category": "messages_schema"
     },
     "embedding": null
   },
   {
-    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_dctools_schema",
-    "content": "Table: dctools\n\nColumns:\n  - id (BIGINT)\n  - tool_name (VARCHAR(250) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - description (VARCHAR(250) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - category (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
+    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_rag_items_schema",
+    "content": "Table: rag_items\n\nColumns:\n  - id (VARCHAR(36))\n  - category (VARCHAR(100))\n  - title (VARCHAR(255))\n  - content (TEXT)\n  - source (VARCHAR(100), nullable)\n  - created_at (DATETIME, nullable)\n  - updated_at (DATETIME, nullable)\n\nPrimary Key: id",
     "metadata": {
-      "table_name": "dctools",
+      "table_name": "rag_items",
       "type": "schema",
       "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
-      "category": "dctools_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_dctoolutilizations_schema",
-    "content": "Table: dctoolutilizations\n\nColumns:\n  - id (BIGINT)\n  - item_id (BIGINT) [dctools]\n  - facility_id (BIGINT) [facilities]\n  - dated_from (DATE, nullable)\n  - dated_to (DATE, nullable)\n  - quantity_used (DOUBLE, nullable, default=0.00)\n  - benchmark (DOUBLE, nullable, default=0.00)\n  - remarks (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "dctoolutilizations",
-      "type": "schema",
-      "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
-      "category": "dctoolutilizations_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_departments_schema",
-    "content": "Table: departments\n\nColumns:\n  - id (BIGINT)\n  - department_name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - facility (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - internal_location (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - description (TEXT COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "departments",
-      "type": "schema",
-      "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
-      "category": "departments_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_facilities_schema",
-    "content": "Table: facilities\n\nColumns:\n  - id (BIGINT)\n  - facility_name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - facility_no (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - state (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - lga (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - town (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - address (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - phone_number (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - contact_person (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "facilities",
-      "type": "schema",
-      "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
-      "category": "facilities_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_failed_jobs_schema",
-    "content": "Table: failed_jobs\n\nColumns:\n  - id (BIGINT)\n  - connection (TEXT COLLATE \"utf8mb4_unicode_ci\")\n  - queue (TEXT COLLATE \"utf8mb4_unicode_ci\")\n  - payload (LONGTEXT)\n  - exception (LONGTEXT)\n  - failed_at (TIMESTAMP, default=current_timestamp())\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "failed_jobs",
-      "type": "schema",
-      "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
-      "category": "failed_jobs_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_files_schema",
-    "content": "Table: files\n\nColumns:\n  - id (BIGINT)\n  - filename (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - itemid (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "files",
-      "type": "schema",
-      "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
-      "category": "files_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_inventories_schema",
-    "content": "Table: inventories\n\nColumns:\n  - id (BIGINT)\n  - item_id (BIGINT, nullable) [items]\n  - item_name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - state (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - facility (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - assigned_to (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - description (TEXT COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - serial_no (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - ihvn_no (TEXT COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - tag_no (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - category (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - type (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - date_purchased (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - supplier (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - user_id (BIGINT, nullable)\n  - quantity (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - status (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - department_id (BIGINT, nullable) [departments]\n  - unit_id (BIGINT, nullable) [units]\n  - facility_id (BIGINT, nullable) [facilities]\n  - added_by (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - internal_location (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - remarks (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - file (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - batch (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - grants (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - date_delivered (VARCHAR(30) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - received_by (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - cid (INTEGER, nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "inventories",
-      "type": "schema",
-      "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
-      "category": "inventories_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_inventoryspecs_schema",
-    "content": "Table: inventoryspecs\n\nColumns:\n  - id (BIGINT)\n  - property (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - value (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n  - itemid (BIGINT, nullable) [inventories]\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "inventoryspecs",
-      "type": "schema",
-      "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
-      "category": "inventoryspecs_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_items_schema",
-    "content": "Table: items\n\nColumns:\n  - id (BIGINT)\n  - item_name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - specifications (TEXT COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "items",
-      "type": "schema",
-      "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
-      "category": "items_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_migrations_schema",
-    "content": "Table: migrations\n\nColumns:\n  - id (INTEGER)\n  - migration (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - batch (INTEGER)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "migrations",
-      "type": "schema",
-      "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
-      "category": "migrations_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_movements_schema",
-    "content": "Table: movements\n\nColumns:\n  - id (BIGINT)\n  - inventories_id (BIGINT) [inventories]\n  - from (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - to (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - from_user (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - to_user (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - reason (TEXT COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - user_id (BIGINT)\n  - date_moved (DATE, nullable)\n  - file (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "movements",
-      "type": "schema",
-      "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
-      "category": "movements_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_multifacilities_schema",
-    "content": "Table: multifacilities\n\nColumns:\n  - id (BIGINT)\n  - user_id (BIGINT) [users]\n  - facility_id (BIGINT) [facilities]\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "multifacilities",
-      "type": "schema",
-      "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
-      "category": "multifacilities_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_password_resets_schema",
-    "content": "Table: password_resets\n\nColumns:\n  - email (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - token (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n",
-    "metadata": {
-      "table_name": "password_resets",
-      "type": "schema",
-      "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
-      "category": "password_resets_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_purchases_schema",
-    "content": "Table: purchases\n\nColumns:\n  - id (BIGINT)\n  - itemid (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - quantity (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - costper (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - supplier (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - date_purchased (DATE)\n  - invoice_no (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - description (TEXT COLLATE \"utf8mb4_unicode_ci\")\n  - facility (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - internal_location (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - remarks (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "purchases",
-      "type": "schema",
-      "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
-      "category": "purchases_schema"
+      "category": "rag_items_schema"
     },
     "embedding": null
   },
@@ -209,915 +115,24 @@
     "embedding": null
   },
   {
-    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_requests_schema",
-    "content": "Table: requests\n\nColumns:\n  - id (BIGINT)\n  - item_name (TEXT COLLATE \"utf8mb4_unicode_ci\")\n  - quantity_requested (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - user_id (BIGINT, nullable)\n  - location (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - state (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - request_status (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - request_reason (TEXT COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - comments (VARCHAR(100) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - remarks (VARCHAR(150) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - type (VARCHAR(30) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "requests",
-      "type": "schema",
-      "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
-      "category": "requests_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_settings_schema",
-    "content": "Table: settings\n\nColumns:\n  - id (BIGINT)\n  - organization_name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - description (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - logo (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - address (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - phone_number (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - copyright (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "settings",
-      "type": "schema",
-      "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
-      "category": "settings_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_stocks_schema",
-    "content": "Table: stocks\n\nColumns:\n  - id (BIGINT)\n  - item_id (BIGINT) [items]\n  - quantity_remaining (DOUBLE, nullable, default=0.00)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "stocks",
-      "type": "schema",
-      "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
-      "category": "stocks_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_suppliers_schema",
-    "content": "Table: suppliers\n\nColumns:\n  - id (BIGINT)\n  - supplier_name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - company_name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - phone_number (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - email (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - items (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - category (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "suppliers",
-      "type": "schema",
-      "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
-      "category": "suppliers_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_supplies_schema",
-    "content": "Table: supplies\n\nColumns:\n  - id (BIGINT)\n  - item_id (BIGINT) [items]\n  - quantity_supplied (DOUBLE, nullable, default=0.00)\n  - date_supplied (DATE, nullable)\n  - supplied_to (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - supplier (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - batchno (VARCHAR(30) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - remarks (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "supplies",
-      "type": "schema",
-      "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
-      "category": "supplies_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_units_schema",
-    "content": "Table: units\n\nColumns:\n  - id (BIGINT)\n  - unit_name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - department (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - facility (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - internal_location (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - description (TEXT COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "units",
-      "type": "schema",
-      "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
-      "category": "units_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_users_schema",
-    "content": "Table: users\n\nColumns:\n  - id (BIGINT)\n  - name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - email (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - email_verified_at (TIMESTAMP, nullable)\n  - password (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - phone_number (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - unit (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - department (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - facility (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - role (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - state (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - remember_token (VARCHAR(100) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "users",
-      "type": "schema",
-      "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
-      "category": "users_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_action_history_schema",
-    "content": "Table: action_history\n\nColumns:\n  - id (VARCHAR(36))\n  - conversation_id (VARCHAR(36), nullable)\n  - action_type (VARCHAR(50))\n  - action_data (LONGTEXT)\n  - result (LONGTEXT, nullable)\n  - status (VARCHAR(50), nullable)\n  - error_message (TEXT, nullable)\n  - executed_at (DATETIME, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "action_history",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "action_history_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_api_configs_schema",
-    "content": "Table: api_configs\n\nColumns:\n  - id (VARCHAR(36))\n  - name (VARCHAR(255))\n  - api_type (VARCHAR(50))\n  - endpoint (VARCHAR(500))\n  - method (VARCHAR(20), nullable)\n  - headers (LONGTEXT, nullable)\n  - auth_type (VARCHAR(50), nullable)\n  - auth_value (VARCHAR(500), nullable)\n  - params_template (LONGTEXT, nullable)\n  - created_at (DATETIME, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "api_configs",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "api_configs_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_audits_schema",
-    "content": "Table: audits\n\nColumns:\n  - id (BIGINT)\n  - action (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - description (TEXT COLLATE \"utf8mb4_unicode_ci\")\n  - doneby (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "audits",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "audits_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_business_rules_schema",
-    "content": "Table: business_rules\n\nColumns:\n  - id (VARCHAR(36))\n  - name (VARCHAR(255))\n  - description (TEXT, nullable)\n  - rule_type (VARCHAR(50))\n  - content (TEXT)\n  - category (VARCHAR(100), nullable)\n  - is_active (TINYINT, nullable)\n  - created_at (DATETIME, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "business_rules",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "business_rules_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_categories_schema",
-    "content": "Table: categories\n\nColumns:\n  - id (BIGINT)\n  - category_name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - description (TEXT COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "categories",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "categories_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_concurrencies_schema",
-    "content": "Table: concurrencies\n\nColumns:\n  - id (BIGINT)\n  - state (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\")\n  - location (VARCHAR(200) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - model (VARCHAR(100) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - serial_number (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - tag_number (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - user (VARCHAR(100) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - date_of_purchase (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - grant (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - category (VARCHAR(100) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - batch (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - condition (VARCHAR(80) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - date_delivered (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - received_by (VARCHAR(100) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - comments (TEXT COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - other_info (TEXT COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - iid (BIGINT, nullable) [inventories]\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "concurrencies",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "concurrencies_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_conversations_schema",
-    "content": "Table: conversations\n\nColumns:\n  - id (VARCHAR(36))\n  - title (VARCHAR(255), nullable)\n  - created_at (DATETIME, nullable)\n  - updated_at (DATETIME, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "conversations",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "conversations_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_database_settings_schema",
-    "content": "Table: database_settings\n\nColumns:\n  - id (VARCHAR(36))\n  - name (VARCHAR(255))\n  - db_type (VARCHAR(50))\n  - host (VARCHAR(255), nullable)\n  - port (INTEGER, nullable)\n  - database (VARCHAR(255))\n  - username (VARCHAR(255), nullable)\n  - password (VARCHAR(255), nullable)\n  - is_active (TINYINT, nullable)\n  - created_at (DATETIME, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "database_settings",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "database_settings_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_dcdistributions_schema",
-    "content": "Table: dcdistributions\n\nColumns:\n  - id (BIGINT)\n  - item_id (BIGINT) [dctools]\n  - quantity_sent (DOUBLE, nullable, default=0.00)\n  - date_sent (DATE, nullable)\n  - sent_from (BIGINT) [facilities]\n  - sentfrom_state (VARCHAR(30) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - sent_to (BIGINT) [facilities]\n  - sentto_state (VARCHAR(30) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - documents (VARCHAR(80) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - remarks (VARCHAR(80) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - sent_by (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - received_by (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - batchno (VARCHAR(80) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - rdocuments (VARCHAR(80) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - rremarks (VARCHAR(80) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - quantity_received (DOUBLE, nullable, default=0.00)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "dcdistributions",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "dcdistributions_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_dcstocks_schema",
-    "content": "Table: dcstocks\n\nColumns:\n  - id (BIGINT)\n  - item_id (BIGINT) [dctools]\n  - quantity_remaining (DOUBLE, nullable, default=0.00)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "dcstocks",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "dcstocks_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_dcsupplies_schema",
-    "content": "Table: dcsupplies\n\nColumns:\n  - id (BIGINT)\n  - item_id (BIGINT) [dctools]\n  - quantity_supplied (DOUBLE, nullable, default=0.00)\n  - date_supplied (DATE, nullable)\n  - supplied_to (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - supplier (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - batchno (VARCHAR(30) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - remarks (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "dcsupplies",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "dcsupplies_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_dctools_schema",
-    "content": "Table: dctools\n\nColumns:\n  - id (BIGINT)\n  - tool_name (VARCHAR(250) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - description (VARCHAR(250) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - category (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "dctools",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "dctools_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_dctoolutilizations_schema",
-    "content": "Table: dctoolutilizations\n\nColumns:\n  - id (BIGINT)\n  - item_id (BIGINT) [dctools]\n  - facility_id (BIGINT) [facilities]\n  - dated_from (DATE, nullable)\n  - dated_to (DATE, nullable)\n  - quantity_used (DOUBLE, nullable, default=0.00)\n  - benchmark (DOUBLE, nullable, default=0.00)\n  - remarks (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "dctoolutilizations",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "dctoolutilizations_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_departments_schema",
-    "content": "Table: departments\n\nColumns:\n  - id (BIGINT)\n  - department_name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - facility (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - internal_location (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - description (TEXT COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "departments",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "departments_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_facilities_schema",
-    "content": "Table: facilities\n\nColumns:\n  - id (BIGINT)\n  - facility_name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - facility_no (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - state (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - lga (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - town (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - address (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - phone_number (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - contact_person (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "facilities",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "facilities_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_failed_jobs_schema",
-    "content": "Table: failed_jobs\n\nColumns:\n  - id (BIGINT)\n  - connection (TEXT COLLATE \"utf8mb4_unicode_ci\")\n  - queue (TEXT COLLATE \"utf8mb4_unicode_ci\")\n  - payload (LONGTEXT)\n  - exception (LONGTEXT)\n  - failed_at (TIMESTAMP, default=current_timestamp())\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "failed_jobs",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "failed_jobs_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_files_schema",
-    "content": "Table: files\n\nColumns:\n  - id (BIGINT)\n  - filename (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - itemid (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "files",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "files_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_inventories_schema",
-    "content": "Table: inventories\n\nColumns:\n  - id (BIGINT)\n  - item_id (BIGINT, nullable) [items]\n  - item_name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - state (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - facility (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - assigned_to (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - description (TEXT COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - serial_no (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - ihvn_no (TEXT COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - tag_no (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - category (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - type (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - date_purchased (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - supplier (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - user_id (BIGINT, nullable)\n  - quantity (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - status (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - department_id (BIGINT, nullable) [departments]\n  - unit_id (BIGINT, nullable) [units]\n  - facility_id (BIGINT, nullable) [facilities]\n  - added_by (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - internal_location (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - remarks (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - file (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - batch (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - grants (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - date_delivered (VARCHAR(30) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - received_by (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - cid (INTEGER, nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "inventories",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "inventories_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_inventoryspecs_schema",
-    "content": "Table: inventoryspecs\n\nColumns:\n  - id (BIGINT)\n  - property (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - value (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n  - itemid (BIGINT, nullable) [inventories]\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "inventoryspecs",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "inventoryspecs_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_items_schema",
-    "content": "Table: items\n\nColumns:\n  - id (BIGINT)\n  - item_name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - specifications (TEXT COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "items",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "items_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_llm_models_schema",
-    "content": "Table: llm_models\n\nColumns:\n  - id (VARCHAR(36))\n  - name (VARCHAR(255))\n  - model_type (VARCHAR(50))\n  - model_id (VARCHAR(255))\n  - api_key (VARCHAR(500), nullable)\n  - api_endpoint (VARCHAR(500), nullable)\n  - priority (INTEGER, nullable)\n  - is_active (TINYINT, nullable)\n  - config (LONGTEXT, nullable)\n  - created_at (DATETIME, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "llm_models",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "llm_models_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_messages_schema",
-    "content": "Table: messages\n\nColumns:\n  - id (VARCHAR(36))\n  - conversation_id (VARCHAR(36)) [conversations]\n  - role (VARCHAR(20))\n  - content (TEXT)\n  - action_data (LONGTEXT, nullable)\n  - action_executed (TINYINT, nullable)\n  - action_result (LONGTEXT, nullable)\n  - created_at (DATETIME, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "messages",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "messages_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_migrations_schema",
-    "content": "Table: migrations\n\nColumns:\n  - id (INTEGER)\n  - migration (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - batch (INTEGER)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "migrations",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "migrations_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_movements_schema",
-    "content": "Table: movements\n\nColumns:\n  - id (BIGINT)\n  - inventories_id (BIGINT) [inventories]\n  - from (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - to (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - from_user (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - to_user (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - reason (TEXT COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - user_id (BIGINT)\n  - date_moved (DATE, nullable)\n  - file (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "movements",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "movements_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_multifacilities_schema",
-    "content": "Table: multifacilities\n\nColumns:\n  - id (BIGINT)\n  - user_id (BIGINT) [users]\n  - facility_id (BIGINT) [facilities]\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "multifacilities",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "multifacilities_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_password_resets_schema",
-    "content": "Table: password_resets\n\nColumns:\n  - email (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - token (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n",
-    "metadata": {
-      "table_name": "password_resets",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "password_resets_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_purchases_schema",
-    "content": "Table: purchases\n\nColumns:\n  - id (BIGINT)\n  - itemid (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - quantity (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - costper (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - supplier (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - date_purchased (DATE)\n  - invoice_no (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - description (TEXT COLLATE \"utf8mb4_unicode_ci\")\n  - facility (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - internal_location (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - remarks (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "purchases",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "purchases_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_rag_items_schema",
-    "content": "Table: rag_items\n\nColumns:\n  - id (VARCHAR(36))\n  - category (VARCHAR(100))\n  - title (VARCHAR(255))\n  - content (TEXT)\n  - source (VARCHAR(100), nullable)\n  - created_at (DATETIME, nullable)\n  - updated_at (DATETIME, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "rag_items",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "rag_items_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_reports_schema",
-    "content": "Table: reports\n\nColumns:\n  - id (VARCHAR(36))\n  - title (VARCHAR(255))\n  - description (TEXT, nullable)\n  - report_type (VARCHAR(50))\n  - data (LONGTEXT)\n  - action_ids (LONGTEXT, nullable)\n  - created_at (DATETIME, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "reports",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "reports_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_requests_schema",
-    "content": "Table: requests\n\nColumns:\n  - id (BIGINT)\n  - item_name (TEXT COLLATE \"utf8mb4_unicode_ci\")\n  - quantity_requested (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - user_id (BIGINT, nullable)\n  - location (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - state (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - request_status (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - request_reason (TEXT COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - comments (VARCHAR(100) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - remarks (VARCHAR(150) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - type (VARCHAR(30) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "requests",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "requests_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_scheduled_activities_schema",
+    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_scheduled_activities_schema",
     "content": "Table: scheduled_activities\n\nColumns:\n  - id (VARCHAR(36))\n  - conversation_id (VARCHAR(36), nullable)\n  - title (VARCHAR(255))\n  - action_type (VARCHAR(50))\n  - action_data (LONGTEXT)\n  - scheduled_for (DATETIME)\n  - recurrence (VARCHAR(50), nullable)\n  - is_active (TINYINT, nullable)\n  - last_executed (DATETIME, nullable)\n  - next_execution (DATETIME, nullable)\n  - created_at (DATETIME, nullable)\n\nPrimary Key: id",
     "metadata": {
       "table_name": "scheduled_activities",
       "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
+      "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
       "category": "scheduled_activities_schema"
     },
     "embedding": null
   },
   {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_schema_info_schema",
+    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8_schema_info_schema",
     "content": "Table: schema_info\n\nColumns:\n  - id (VARCHAR(36))\n  - table_name (VARCHAR(255))\n  - column_name (VARCHAR(255))\n  - column_type (VARCHAR(100))\n  - sample_values (LONGTEXT, nullable)\n  - description (TEXT, nullable)\n  - embedding_id (VARCHAR(255), nullable)\n  - created_at (DATETIME, nullable)\n\nPrimary Key: id",
     "metadata": {
       "table_name": "schema_info",
       "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
+      "database_id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
       "category": "schema_info_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_settings_schema",
-    "content": "Table: settings\n\nColumns:\n  - id (BIGINT)\n  - organization_name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - description (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - logo (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - address (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - phone_number (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - copyright (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "settings",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "settings_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_stocks_schema",
-    "content": "Table: stocks\n\nColumns:\n  - id (BIGINT)\n  - item_id (BIGINT) [items]\n  - quantity_remaining (DOUBLE, nullable, default=0.00)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "stocks",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "stocks_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_suppliers_schema",
-    "content": "Table: suppliers\n\nColumns:\n  - id (BIGINT)\n  - supplier_name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - company_name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - phone_number (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - email (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - items (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - category (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "suppliers",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "suppliers_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_supplies_schema",
-    "content": "Table: supplies\n\nColumns:\n  - id (BIGINT)\n  - item_id (BIGINT) [items]\n  - quantity_supplied (DOUBLE, nullable, default=0.00)\n  - date_supplied (DATE, nullable)\n  - supplied_to (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - supplier (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - batchno (VARCHAR(30) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - remarks (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "supplies",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "supplies_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_units_schema",
-    "content": "Table: units\n\nColumns:\n  - id (BIGINT)\n  - unit_name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - department (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - facility (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - internal_location (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - description (TEXT COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "units",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "units_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "7552e907-76f0-4a30-9f3f-207072972665_users_schema",
-    "content": "Table: users\n\nColumns:\n  - id (BIGINT)\n  - name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - email (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - email_verified_at (TIMESTAMP, nullable)\n  - password (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - phone_number (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - unit (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - department (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - facility (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - role (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - state (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - remember_token (VARCHAR(100) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "users",
-      "type": "schema",
-      "database_id": "7552e907-76f0-4a30-9f3f-207072972665",
-      "category": "users_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_action_history_schema",
-    "content": "Table: action_history\n\nColumns:\n  - id (VARCHAR(36))\n  - conversation_id (VARCHAR(36), nullable)\n  - action_type (VARCHAR(50))\n  - action_data (LONGTEXT)\n  - result (LONGTEXT, nullable)\n  - status (VARCHAR(50), nullable)\n  - error_message (TEXT, nullable)\n  - executed_at (DATETIME, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "action_history",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "action_history_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_api_configs_schema",
-    "content": "Table: api_configs\n\nColumns:\n  - id (VARCHAR(36))\n  - name (VARCHAR(255))\n  - api_type (VARCHAR(50))\n  - endpoint (VARCHAR(500))\n  - method (VARCHAR(20), nullable)\n  - headers (LONGTEXT, nullable)\n  - auth_type (VARCHAR(50), nullable)\n  - auth_value (VARCHAR(500), nullable)\n  - params_template (LONGTEXT, nullable)\n  - created_at (DATETIME, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "api_configs",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "api_configs_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_audits_schema",
-    "content": "Table: audits\n\nColumns:\n  - id (BIGINT)\n  - action (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - description (TEXT COLLATE \"utf8mb4_unicode_ci\")\n  - doneby (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "audits",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "audits_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_business_rules_schema",
-    "content": "Table: business_rules\n\nColumns:\n  - id (VARCHAR(36))\n  - name (VARCHAR(255))\n  - description (TEXT, nullable)\n  - rule_type (VARCHAR(50))\n  - content (TEXT)\n  - category (VARCHAR(100), nullable)\n  - is_active (TINYINT, nullable)\n  - created_at (DATETIME, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "business_rules",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "business_rules_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_categories_schema",
-    "content": "Table: categories\n\nColumns:\n  - id (BIGINT)\n  - category_name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - description (TEXT COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "categories",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "categories_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_concurrencies_schema",
-    "content": "Table: concurrencies\n\nColumns:\n  - id (BIGINT)\n  - state (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\")\n  - location (VARCHAR(200) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - model (VARCHAR(100) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - serial_number (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - tag_number (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - user (VARCHAR(100) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - date_of_purchase (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - grant (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - category (VARCHAR(100) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - batch (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - condition (VARCHAR(80) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - date_delivered (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - received_by (VARCHAR(100) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - comments (TEXT COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - other_info (TEXT COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - iid (BIGINT, nullable) [inventories]\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "concurrencies",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "concurrencies_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_conversations_schema",
-    "content": "Table: conversations\n\nColumns:\n  - id (VARCHAR(36))\n  - title (VARCHAR(255), nullable)\n  - created_at (DATETIME, nullable)\n  - updated_at (DATETIME, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "conversations",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "conversations_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_database_settings_schema",
-    "content": "Table: database_settings\n\nColumns:\n  - id (VARCHAR(36))\n  - name (VARCHAR(255))\n  - db_type (VARCHAR(50))\n  - host (VARCHAR(255), nullable)\n  - port (INTEGER, nullable)\n  - database (VARCHAR(255))\n  - username (VARCHAR(255), nullable)\n  - password (VARCHAR(255), nullable)\n  - is_active (TINYINT, nullable)\n  - created_at (DATETIME, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "database_settings",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "database_settings_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_dcdistributions_schema",
-    "content": "Table: dcdistributions\n\nColumns:\n  - id (BIGINT)\n  - item_id (BIGINT) [dctools]\n  - quantity_sent (DOUBLE, nullable, default=0.00)\n  - date_sent (DATE, nullable)\n  - sent_from (BIGINT) [facilities]\n  - sentfrom_state (VARCHAR(30) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - sent_to (BIGINT) [facilities]\n  - sentto_state (VARCHAR(30) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - documents (VARCHAR(80) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - remarks (VARCHAR(80) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - sent_by (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - received_by (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - batchno (VARCHAR(80) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - rdocuments (VARCHAR(80) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - rremarks (VARCHAR(80) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - quantity_received (DOUBLE, nullable, default=0.00)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "dcdistributions",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "dcdistributions_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_dcstocks_schema",
-    "content": "Table: dcstocks\n\nColumns:\n  - id (BIGINT)\n  - item_id (BIGINT) [dctools]\n  - quantity_remaining (DOUBLE, nullable, default=0.00)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "dcstocks",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "dcstocks_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_dcsupplies_schema",
-    "content": "Table: dcsupplies\n\nColumns:\n  - id (BIGINT)\n  - item_id (BIGINT) [dctools]\n  - quantity_supplied (DOUBLE, nullable, default=0.00)\n  - date_supplied (DATE, nullable)\n  - supplied_to (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - supplier (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - batchno (VARCHAR(30) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - remarks (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "dcsupplies",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "dcsupplies_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_dctools_schema",
-    "content": "Table: dctools\n\nColumns:\n  - id (BIGINT)\n  - tool_name (VARCHAR(250) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - description (VARCHAR(250) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - category (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "dctools",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "dctools_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_dctoolutilizations_schema",
-    "content": "Table: dctoolutilizations\n\nColumns:\n  - id (BIGINT)\n  - item_id (BIGINT) [dctools]\n  - facility_id (BIGINT) [facilities]\n  - dated_from (DATE, nullable)\n  - dated_to (DATE, nullable)\n  - quantity_used (DOUBLE, nullable, default=0.00)\n  - benchmark (DOUBLE, nullable, default=0.00)\n  - remarks (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "dctoolutilizations",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "dctoolutilizations_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_departments_schema",
-    "content": "Table: departments\n\nColumns:\n  - id (BIGINT)\n  - department_name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - facility (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - internal_location (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - description (TEXT COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "departments",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "departments_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_facilities_schema",
-    "content": "Table: facilities\n\nColumns:\n  - id (BIGINT)\n  - facility_name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - facility_no (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - state (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - lga (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - town (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - address (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - phone_number (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - contact_person (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "facilities",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "facilities_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_failed_jobs_schema",
-    "content": "Table: failed_jobs\n\nColumns:\n  - id (BIGINT)\n  - connection (TEXT COLLATE \"utf8mb4_unicode_ci\")\n  - queue (TEXT COLLATE \"utf8mb4_unicode_ci\")\n  - payload (LONGTEXT)\n  - exception (LONGTEXT)\n  - failed_at (TIMESTAMP, default=current_timestamp())\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "failed_jobs",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "failed_jobs_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_files_schema",
-    "content": "Table: files\n\nColumns:\n  - id (BIGINT)\n  - filename (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - itemid (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "files",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "files_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_inventories_schema",
-    "content": "Table: inventories\n\nColumns:\n  - id (BIGINT)\n  - item_id (BIGINT, nullable) [items]\n  - item_name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - state (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - facility (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - assigned_to (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - description (TEXT COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - serial_no (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - ihvn_no (TEXT COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - tag_no (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - category (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - type (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - date_purchased (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - supplier (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - user_id (BIGINT, nullable)\n  - quantity (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - status (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - department_id (BIGINT, nullable) [departments]\n  - unit_id (BIGINT, nullable) [units]\n  - facility_id (BIGINT, nullable) [facilities]\n  - added_by (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - internal_location (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - remarks (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - file (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - batch (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - grants (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - date_delivered (VARCHAR(30) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - received_by (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - cid (INTEGER, nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "inventories",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "inventories_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_inventoryspecs_schema",
-    "content": "Table: inventoryspecs\n\nColumns:\n  - id (BIGINT)\n  - property (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - value (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n  - itemid (BIGINT, nullable) [inventories]\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "inventoryspecs",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "inventoryspecs_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_items_schema",
-    "content": "Table: items\n\nColumns:\n  - id (BIGINT)\n  - item_name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - specifications (TEXT COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "items",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "items_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_llm_models_schema",
-    "content": "Table: llm_models\n\nColumns:\n  - id (VARCHAR(36))\n  - name (VARCHAR(255))\n  - model_type (VARCHAR(50))\n  - model_id (VARCHAR(255))\n  - api_key (VARCHAR(500), nullable)\n  - api_endpoint (VARCHAR(500), nullable)\n  - priority (INTEGER, nullable)\n  - is_active (TINYINT, nullable)\n  - config (LONGTEXT, nullable)\n  - created_at (DATETIME, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "llm_models",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "llm_models_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_messages_schema",
-    "content": "Table: messages\n\nColumns:\n  - id (VARCHAR(36))\n  - conversation_id (VARCHAR(36)) [conversations]\n  - role (VARCHAR(20))\n  - content (TEXT)\n  - action_data (LONGTEXT, nullable)\n  - action_executed (TINYINT, nullable)\n  - action_result (LONGTEXT, nullable)\n  - created_at (DATETIME, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "messages",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "messages_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_migrations_schema",
-    "content": "Table: migrations\n\nColumns:\n  - id (INTEGER)\n  - migration (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - batch (INTEGER)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "migrations",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "migrations_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_movements_schema",
-    "content": "Table: movements\n\nColumns:\n  - id (BIGINT)\n  - inventories_id (BIGINT) [inventories]\n  - from (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - to (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - from_user (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - to_user (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - reason (TEXT COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - user_id (BIGINT)\n  - date_moved (DATE, nullable)\n  - file (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "movements",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "movements_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_multifacilities_schema",
-    "content": "Table: multifacilities\n\nColumns:\n  - id (BIGINT)\n  - user_id (BIGINT) [users]\n  - facility_id (BIGINT) [facilities]\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "multifacilities",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "multifacilities_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_password_resets_schema",
-    "content": "Table: password_resets\n\nColumns:\n  - email (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - token (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n",
-    "metadata": {
-      "table_name": "password_resets",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "password_resets_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_purchases_schema",
-    "content": "Table: purchases\n\nColumns:\n  - id (BIGINT)\n  - itemid (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - quantity (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - costper (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - supplier (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - date_purchased (DATE)\n  - invoice_no (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - description (TEXT COLLATE \"utf8mb4_unicode_ci\")\n  - facility (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - internal_location (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - remarks (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "purchases",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "purchases_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_rag_items_schema",
-    "content": "Table: rag_items\n\nColumns:\n  - id (VARCHAR(36))\n  - category (VARCHAR(100))\n  - title (VARCHAR(255))\n  - content (TEXT)\n  - source (VARCHAR(100), nullable)\n  - created_at (DATETIME, nullable)\n  - updated_at (DATETIME, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "rag_items",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "rag_items_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_reports_schema",
-    "content": "Table: reports\n\nColumns:\n  - id (VARCHAR(36))\n  - title (VARCHAR(255))\n  - description (TEXT, nullable)\n  - report_type (VARCHAR(50))\n  - data (LONGTEXT)\n  - action_ids (LONGTEXT, nullable)\n  - created_at (DATETIME, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "reports",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "reports_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_requests_schema",
-    "content": "Table: requests\n\nColumns:\n  - id (BIGINT)\n  - item_name (TEXT COLLATE \"utf8mb4_unicode_ci\")\n  - quantity_requested (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - user_id (BIGINT, nullable)\n  - location (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - state (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - request_status (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - request_reason (TEXT COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - comments (VARCHAR(100) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - remarks (VARCHAR(150) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - type (VARCHAR(30) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "requests",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "requests_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_scheduled_activities_schema",
-    "content": "Table: scheduled_activities\n\nColumns:\n  - id (VARCHAR(36))\n  - conversation_id (VARCHAR(36), nullable)\n  - title (VARCHAR(255))\n  - action_type (VARCHAR(50))\n  - action_data (LONGTEXT)\n  - scheduled_for (DATETIME)\n  - recurrence (VARCHAR(50), nullable)\n  - is_active (TINYINT, nullable)\n  - last_executed (DATETIME, nullable)\n  - next_execution (DATETIME, nullable)\n  - created_at (DATETIME, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "scheduled_activities",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "scheduled_activities_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_schema_info_schema",
-    "content": "Table: schema_info\n\nColumns:\n  - id (VARCHAR(36))\n  - table_name (VARCHAR(255))\n  - column_name (VARCHAR(255))\n  - column_type (VARCHAR(100))\n  - sample_values (LONGTEXT, nullable)\n  - description (TEXT, nullable)\n  - embedding_id (VARCHAR(255), nullable)\n  - created_at (DATETIME, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "schema_info",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "schema_info_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_settings_schema",
-    "content": "Table: settings\n\nColumns:\n  - id (BIGINT)\n  - organization_name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - description (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - logo (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - address (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - phone_number (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - copyright (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "settings",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "settings_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_stocks_schema",
-    "content": "Table: stocks\n\nColumns:\n  - id (BIGINT)\n  - item_id (BIGINT) [items]\n  - quantity_remaining (DOUBLE, nullable, default=0.00)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "stocks",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "stocks_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_suppliers_schema",
-    "content": "Table: suppliers\n\nColumns:\n  - id (BIGINT)\n  - supplier_name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - company_name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - phone_number (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - email (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - items (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - category (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "suppliers",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "suppliers_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_supplies_schema",
-    "content": "Table: supplies\n\nColumns:\n  - id (BIGINT)\n  - item_id (BIGINT) [items]\n  - quantity_supplied (DOUBLE, nullable, default=0.00)\n  - date_supplied (DATE, nullable)\n  - supplied_to (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - supplier (VARCHAR(50) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - batchno (VARCHAR(30) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - remarks (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "supplies",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "supplies_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_units_schema",
-    "content": "Table: units\n\nColumns:\n  - id (BIGINT)\n  - unit_name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - department (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - facility (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - internal_location (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - description (TEXT COLLATE \"utf8mb4_unicode_ci\")\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "units",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "units_schema"
-    },
-    "embedding": null
-  },
-  {
-    "id": "adccf50e-aeb5-4bad-abee-df14b636095b_users_schema",
-    "content": "Table: users\n\nColumns:\n  - id (BIGINT)\n  - name (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - email (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - email_verified_at (TIMESTAMP, nullable)\n  - password (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - phone_number (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - unit (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - department (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - facility (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\")\n  - role (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - state (VARCHAR(191) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - remember_token (VARCHAR(100) COLLATE \"utf8mb4_unicode_ci\", nullable)\n  - created_at (TIMESTAMP, nullable)\n  - updated_at (TIMESTAMP, nullable)\n\nPrimary Key: id",
-    "metadata": {
-      "table_name": "users",
-      "type": "schema",
-      "database_id": "adccf50e-aeb5-4bad-abee-df14b636095b",
-      "category": "users_schema"
     },
     "embedding": null
   }
