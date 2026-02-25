@@ -1,0 +1,117 @@
+.datatable-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-left: 1px solid #e0e0e0;
+  overflow: hidden;
+}
+
+.datatable-title {
+  margin: 1rem;
+  color: #333;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.datatable-info {
+  padding: 0 1rem;
+  font-size: 0.875rem;
+  color: #999;
+}
+
+.datatable-stats {
+  margin: 0;
+}
+
+.datatable-wrapper {
+  flex: 1;
+  overflow: auto;
+  padding: 0 1rem 1rem 1rem;
+}
+
+.datatable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.datatable thead {
+  position: sticky;
+  top: 0;
+  background: #f9f9f9;
+  z-index: 10;
+}
+
+.datatable th {
+  padding: 0;
+  border-bottom: 2px solid #ddd;
+}
+
+.column-header {
+  padding: 0.5rem;
+}
+
+.sort-button {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 0.5rem 0;
+  cursor: pointer;
+  font-weight: 600;
+  color: #333;
+  transition: background 0.2s;
+  padding-bottom: 0.5rem;
+}
+
+.sort-button:hover {
+  color: #0066cc;
+}
+
+.sort-icon {
+  font-size: 0.75rem;
+  margin-left: 0.25rem;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.4rem;
+  border: 1px solid #ddd;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
+}
+
+.datatable td {
+  padding: 0.75rem 0.5rem;
+  border-bottom: 1px solid #f0f0f0;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.datatable td span {
+  display: block;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.datatable tbody tr:hover {
+  background: #f9f9f9;
+}
+
+.empty-cell {
+  text-align: center;
+  color: #999;
+  padding: 2rem;
+  font-style: italic;
+}

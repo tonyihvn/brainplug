@@ -1,0 +1,50 @@
+[
+  {
+    "id": "3b2c9f04-23b2-4fb7-8e98-7f97fb1a37e8",
+    "name": "Iventory",
+    "db_type": "mysql",
+    "host": "localhost",
+    "port": "3306",
+    "database": "iventory",
+    "username": "root",
+    "password": "root",
+    "is_active": true,
+    "created_at": "2026-02-25T00:23:36.851900"
+  },
+  {
+    "id": "100d5b2c-0893-42e1-9795-2765fa5a759a",
+    "name": "Gemini Pro",
+    "model_type": "gemini",
+    "model_id": "gemini-2.5-pro",
+    "api_key": "AIzaSyChelTiMjbljvjQE8XHKUdPF9Yzoum022w",
+    "api_endpoint": "",
+    "is_active": true,
+    "priority": 0,
+    "config": {},
+    "created_at": "2026-02-25T00:59:01.425689"
+  },
+  {
+    "id": "8db68e63-b88a-49e4-9f93-513add0dddd4",
+    "name": "Ollama",
+    "model_type": "local",
+    "model_id": "mistral:latest",
+    "api_key": "",
+    "api_endpoint": "http://localhost:11434",
+    "is_active": false,
+    "priority": 3,
+    "config": {},
+    "created_at": "2026-02-25T00:59:36.376950"
+  },
+  {
+    "id": "26b67dc8-3c89-4a3c-b09b-cf846d8c3b33",
+    "name": "Local Mistral (mistral:latest)",
+    "model_type": "ollama",
+    "model_id": "mistral:latest",
+    "api_key": "",
+    "api_endpoint": "http://localhost:11434",
+    "is_active": false,
+    "priority": 2,
+    "config": {},
+    "created_at": "2026-02-25T01:00:38.748788"
+  }
+]
