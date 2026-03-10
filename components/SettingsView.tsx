@@ -4,6 +4,7 @@ import DatabaseSettings from './settings/DatabaseSettings'
 import LLMSettings from './settings/LLMSettings'
 import RAGSettings from './settings/RAGSettings'
 import SystemSettings from './settings/SystemSettings'
+import DataIngestionSettings from './settings/DataIngestionSettings'
 import ScheduledActivities from './settings/ScheduledActivities'
 import DataSourcesAndAPIsSettings from './settings/DataSourcesAndAPIsSettings'
 import DBMSExplorer from './DBMSExplorer'
@@ -17,8 +18,19 @@ interface SettingsViewProps {
 export default function SettingsView({ onBack }: SettingsViewProps) {
   const [activeTab, setActiveTab] = useState(0)
 
-  const tabs = [
+  // Configuration: Set tabs to hide by adding their labels to this array
+  // To re-enable a tab later, simply remove it from this array
+  const HIDDEN_TABS = [
+    'Scheduled Tasks',
+    'Data Sources & APIs',
+    'DBMS',
+    'Reports',
+    'Other'
+  ]
+
+  const allTabs = [
     { label: 'Database', component: DatabaseSettings },
+    { label: 'Data Ingestion', component: DataIngestionSettings },
     { label: 'LLM Models', component: LLMSettings },
     { label: 'RAG', component: RAGSettings },
     { label: 'System', component: SystemSettings },
@@ -29,7 +41,10 @@ export default function SettingsView({ onBack }: SettingsViewProps) {
     { label: 'Other', component: OtherSettings },
   ]
 
-  const ActiveComponent = tabs[activeTab].component
+  // Filter out hidden tabs
+  const tabs = allTabs.filter(tab => !HIDDEN_TABS.includes(tab.label))
+
+  const ActiveComponent = tabs[activeTab]?.component
 
   return (
     <div className="settings-container">

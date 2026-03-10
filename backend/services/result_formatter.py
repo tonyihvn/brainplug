@@ -20,14 +20,14 @@ class ResultFormatter:
         
         Args:
             result_data: Raw result from action execution
-            action_type: Type of action (DATABASE_QUERY, EMAIL, etc.)
+            action_type: Type of action (DATABASE_QUERY, RAG_QUERY, EMAIL, etc.)
         
         Returns:
             Formatted result with 3 levels of detail
         """
         try:
-            if action_type == 'DATABASE_QUERY':
-                return self._format_database_result(result_data)
+            if action_type in ['DATABASE_QUERY', 'RAG_QUERY']:
+                return self._format_database_result(result_data, action_type)
             else:
                 return self._format_generic_result(result_data)
         except Exception as e:
@@ -38,19 +38,21 @@ class ResultFormatter:
                 'raw_data': result_data
             }
 
-    def _format_database_result(self, result_data: Dict) -> Dict:
-        """Format database query results with 3-level summarization."""
+    def _format_database_result(self, result_data: Dict, action_type: str = 'DATABASE_QUERY') -> Dict:
+        """Format database/RAG query results with 3-level summarization."""
         rows = result_data.get('rows', [])
         row_count = result_data.get('row_count', 0)
         
         if not rows or row_count == 0:
+            query_type_label = "RAG" if action_type == 'RAG_QUERY' else "Database"
             return {
                 'status': 'success',
                 'row_count': 0,
+                'query_type': f"{query_type_label} Query",
                 'summary_levels': {
-                    'level_1': 'No data returned',
-                    'level_2': 'Query returned empty result set',
-                    'level_3': 'No records match the query criteria'
+                    'level_1': f'No {query_type_label.lower()} results returned',
+                    'level_2': f'{query_type_label} query returned empty result set',
+                    'level_3': f'No records/chunks match the query criteria'
                 },
                 'rows': []
             }
@@ -67,6 +69,7 @@ class ResultFormatter:
         return {
             'status': 'success',
             'row_count': row_count,
+            'query_type': "RAG Query" if action_type == 'RAG_QUERY' else "Database Query",
             'column_count': len(rows[0].keys()) if rows else 0,
             'columns': list(rows[0].keys()) if rows else [],
             'summary_levels': {

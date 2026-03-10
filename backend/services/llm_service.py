@@ -13,6 +13,10 @@ try:
 except Exception:
     anthropic = None
 try:
+    from openai import OpenAI as OpenAIClient
+except Exception:
+    OpenAIClient = None
+try:
     import requests
 except Exception:
     requests = None
@@ -35,10 +39,14 @@ class LLMService:
         self.api_key = os.getenv('GEMINI_API_KEY')
         self.claude_client = None
         self.claude_model_id = None
+        self.openai_client = None
+        self.openai_model_id = None
+        self.openai_api_key = None
         # Ollama local client settings - DO NOT auto-initialize
         self.ollama_host = None  # Will only be set if explicitly configured in DB
         self.ollama_model = None
         self.ollama_available = False
+        self.active_db_query_mode = 'direct'  # Track active database query mode
 
         # Use RAG store as the canonical settings store for LLM models
         try:
@@ -49,9 +57,34 @@ class LLMService:
         # Initialize from RAG Vector Database (the only settings source)
         try:
             self._ensure_active_model()
+            self._load_active_database_mode()  # Load active database query mode
         except Exception as e:
             logger.warning(f"✗ Error initializing active LLM from RAG Vector Database: {str(e)}")
             # Note: SQL database is no longer used for settings - all settings come from RAG only
+    
+    def _load_active_database_mode(self):
+        """Load the query mode of the active database (direct or api)."""
+        try:
+            if not self.rag_db:
+                self.active_db_query_mode = 'direct'  # Default to direct
+                return
+            
+            # Get all database settings
+            all_settings = self.rag_db.get_all_database_settings() or []
+            db_settings = [s for s in all_settings if s.get('db_type')]
+            
+            # Find active database
+            active_db = next((s for s in db_settings if s.get('is_active')), None)
+            
+            if active_db:
+                self.active_db_query_mode = active_db.get('query_mode', 'direct')
+                logger.info(f"✓ Loaded active database query mode: {self.active_db_query_mode}")
+            else:
+                self.active_db_query_mode = 'direct'  # Default to direct if no active DB
+        except Exception as e:
+            logger.debug(f"Error loading active database mode: {e}")
+            self.active_db_query_mode = 'direct'  # Default to direct on error
+
     
     def _try_init_ollama(self):
         """Try to initialize local Ollama model as fallback."""
@@ -150,17 +183,36 @@ class LLMService:
             # Refresh active model in case settings changed while server is running
             try:
                 self._ensure_active_model()
-            except Exception:
-                logger.debug("_ensure_active_model failed during process_prompt")
+                logger.info(f"✓ Active LLM service refreshed: model_type={self.model_type}")
+            except Exception as e:
+                logger.warning(f"_ensure_active_model failed during process_prompt: {e}")
 
             # LOG: Which LLM is active
             logger.info(f"→ ACTIVE LLM: {self.model_type.upper() if self.model_type else 'NONE'}")
             if self.model_type == 'gemini':
-                logger.info(f"  Provider: Google Gemini | API Key: {'SET' if self.api_key else 'MISSING'} | Model object: {'LOADED' if self.model else 'NOT LOADED'}")
+                # Show partial API key for debugging
+                key_display = '(NO KEY)' if not self.api_key else f"{self.api_key[:10]}...{self.api_key[-10:]}" if len(self.api_key) > 20 else self.api_key
+                logger.info(f"  Provider: Google Gemini")
+                logger.info(f"  API Key: {key_display}")
+                logger.info(f"  Model object: {'LOADED' if self.model else 'NOT LOADED'}")
             elif self.model_type == 'claude':
-                logger.info(f"  Provider: Anthropic Claude | Model: {self.claude_model_id} | Client: {'CONNECTED' if self.claude_client else 'FAILED'}")
+                # Show partial API key for debugging
+                key_display = '(NO KEY)' if not self.claude_api_key else f"{self.claude_api_key[:10]}...{self.claude_api_key[-10:]}" if len(self.claude_api_key) > 20 else self.claude_api_key
+                logger.info(f"  Provider: Anthropic Claude")
+                logger.info(f"  API Key: {key_display}")
+                logger.info(f"  Model: {self.claude_model_id}")
+                logger.info(f"  Client: {'CONNECTED' if self.claude_client else 'FAILED'}")
             elif self.model_type == 'ollama':
-                logger.info(f"  Provider: Local Ollama | Host: {self.ollama_host} | Model: {self.ollama_model} | Available: {self.ollama_available}")
+                logger.info(f"  Provider: Local Ollama")
+                logger.info(f"  Host: {self.ollama_host}")
+                logger.info(f"  Model: {self.ollama_model}")
+                logger.info(f"  Available: {self.ollama_available}")
+            elif self.model_type == 'openai':
+                key_display = '(NO KEY)' if not self.openai_api_key else f"{self.openai_api_key[:10]}...{self.openai_api_key[-10:]}" if len(self.openai_api_key) > 20 else self.openai_api_key
+                logger.info(f"  Provider: OpenAI")
+                logger.info(f"  API Key: {key_display}")
+                logger.info(f"  Model: {self.openai_model_id}")
+                logger.info(f"  Client: {'CONNECTED' if self.openai_client else 'FAILED'}")
             else:
                 logger.warning(f"  No LLM configured!")
             
@@ -318,19 +370,89 @@ class LLMService:
                                          "CONFIDENCE: low\n"
                                          "NEXT_STEP: Configure a valid Gemini model_id in settings or set GEMINI_MODEL_ID in .env.")
                 except Exception as e:
-                    logger.error(f"✗ Gemini API error: {str(e)}")
-                    response_text = f"Error calling Gemini API: {str(e)}"
+                    error_msg = str(e)
+                    # Log which API key was used for debugging quota/rate limit issues
+                    key_display = '(NO KEY)' if not self.api_key else f"{self.api_key[:10]}...{self.api_key[-10:]}" if len(self.api_key) > 20 else self.api_key
+                    logger.error(f"✗ Gemini API error using key [{key_display}]: {error_msg}")
+                    if '429' in error_msg or 'quota' in error_msg.lower() or 'rate' in error_msg.lower():
+                        logger.error(f"  ⚠️  QUOTA/RATE LIMIT EXCEEDED - Check your Gemini API plan and billing")
+                        response_text = f"Gemini API Error: {error_msg}. Your API quota may be exceeded."
+                    else:
+                        response_text = f"Error calling Gemini API: {error_msg}"
+
+            # Anthropic Claude
+            elif self.model_type == 'claude' and anthropic and self.claude_client:
+                logger.info("→ CALLING Anthropic Claude API...")
+                try:
+                    message = self.claude_client.messages.create(
+                        model=self.claude_model_id or 'claude-3-5-haiku-20241022',
+                        max_tokens=2048,
+                        system=system_prompt,
+                        messages=[
+                            {"role": "user", "content": enriched_prompt}
+                        ]
+                    )
+                    response_text = message.content[0].text if message.content else ""
+                    logger.info(f"✓ Claude responded: {len(response_text) if response_text else 0} chars")
+                except Exception as e:
+                    error_msg = str(e)
+                    logger.error(f"✗ Claude API error: {error_msg}")
+                    if '429' in error_msg or 'overloaded' in error_msg.lower():
+                        logger.error(f"  ⚠️  RATE LIMIT EXCEEDED - Claude API is overloaded or rate limited")
+                        response_text = f"Claude API Error: {error_msg}. API may be rate limited."
+                    else:
+                        response_text = f"Error calling Claude API: {error_msg}"
+
+            # OpenAI GPT
+            elif self.model_type == 'openai' and OpenAIClient and self.openai_client:
+                logger.info(f"→ CALLING OpenAI API ({self.openai_model_id})...")
+                try:
+                    message = self.openai_client.chat.completions.create(
+                        model=self.openai_model_id or 'gpt-4o',
+                        max_tokens=2048,
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": enriched_prompt}
+                        ]
+                    )
+                    response_text = message.choices[0].message.content if message.choices else ""
+                    logger.info(f"✓ OpenAI responded: {len(response_text) if response_text else 0} chars")
+                except Exception as e:
+                    error_msg = str(e)
+                    logger.error(f"✗ OpenAI API error: {error_msg}")
+                    if '429' in error_msg or 'rate' in error_msg.lower():
+                        logger.error(f"  ⚠️  RATE LIMIT EXCEEDED - OpenAI API is rate limited")
+                        response_text = f"OpenAI API Error: {error_msg}. API may be rate limited."
+                    elif 'insufficient_quota' in error_msg.lower() or 'quota' in error_msg.lower():
+                        logger.error(f"  ⚠️  QUOTA EXCEEDED - Check your OpenAI account billing")
+                        response_text = f"OpenAI API Error: {error_msg}. Check your API quota."
+                    else:
+                        response_text = f"Error calling OpenAI API: {error_msg}"
 
             # No model available
             else:
-                logger.warning("✗ NO LLM MODEL CONFIGURED")
-                response_text = (
-                    "UNDERSTANDING: The system is not currently configured with a cloud LLM.\n"
-                    "ACTION_TYPE: NONE\n"
-                    "SQL_QUERY: N/A\n"
-                    "PARAMETERS: N/A\n"
-                    "CONFIDENCE: low\n"
-                    "NEXT_STEP: Configure LLM settings (Gemini, Claude, or local Ollama) with valid API key or model.")
+                # Check what went wrong
+                if self.model_type == 'ollama':
+                    logger.warning(f"✗ Ollama configured but not available: requests={bool(requests)} | host={self.ollama_host} | model={self.ollama_model} | available={self.ollama_available}")
+                    response_text = f"Error: Local Ollama not responding. Check service is running at {self.ollama_host}"
+                elif self.model_type == 'claude':
+                    logger.warning(f"✗ Claude configured but client not initialized: client={bool(self.claude_client)} | model_id={self.claude_model_id}")
+                    response_text = "Error: Claude client failed to initialize. Check API key is valid."
+                elif self.model_type == 'openai':
+                    logger.warning(f"✗ OpenAI configured but client not initialized: client={bool(self.openai_client)} | model_id={self.openai_model_id}")
+                    response_text = "Error: OpenAI client failed to initialize. Check API key is valid."
+                elif self.model_type == 'gemini':
+                    logger.warning(f"✗ Gemini configured but model not loaded: api_key={bool(self.api_key)} | model={bool(self.model)}")
+                    response_text = "Error: Gemini model failed to load. Check API key and model_id."
+                else:
+                    logger.warning("✗ NO LLM MODEL CONFIGURED - No model_type is set")
+                    response_text = (
+                        "UNDERSTANDING: The system is not currently configured with a cloud LLM.\n"
+                        "ACTION_TYPE: NONE\n"
+                        "SQL_QUERY: N/A\n"
+                        "PARAMETERS: N/A\n"
+                        "CONFIDENCE: low\n"
+                        "NEXT_STEP: Configure LLM settings (Gemini, Claude, OpenAI, or local Ollama) with valid API key or model.")
             
             # Parse response to extract understanding, action, and SQL
             logger.info(f"→ PARSING LLM response...")
@@ -388,6 +510,9 @@ class LLMService:
             self.ollama_host = None
             self.claude_client = None
             self.claude_model_id = None
+            self.openai_client = None
+            self.openai_model_id = None
+            self.openai_api_key = None
 
             if not getattr(self, 'rag_db', None):
                 logger.debug("_ensure_active_model: no rag_db available")
@@ -443,7 +568,22 @@ class LLMService:
                 gemini_api_key = active.get('api_key') or os.getenv('GEMINI_API_KEY')
                 if genai and gemini_api_key:
                     try:
+                        # IMPORTANT: Clear cached Google API credentials to avoid using old/expired keys
+                        # The genai library caches credentials in module state, so we need to reset it
+                        # before calling configure() with the new key
+                        try:
+                            # Force reload the genai module to clear any cached state
+                            if hasattr(genai, '_client'):
+                                delattr(genai, '_client')
+                            logger.debug("_ensure_active_model: Cleared cached genai client state")
+                        except Exception as cache_clear_err:
+                            logger.debug(f"_ensure_active_model: Could not clear genai cache: {cache_clear_err}")
+                        
+                        # Configure with the current API key (from RAG or .env)
+                        # This MUST happen after any cache clearing
+                        logger.info(f"_ensure_active_model: Configuring Gemini with API key (preview: {gemini_api_key[:30]}...)")
                         genai.configure(api_key=gemini_api_key)
+                        
                         model_id = active.get('model_id') or os.getenv('GEMINI_MODEL_ID')
                         if model_id:
                             self.model = genai.GenerativeModel(model_id)
@@ -451,8 +591,19 @@ class LLMService:
                             self.api_key = gemini_api_key
                             logger.info(f"✓ Initialized Gemini from RAG: {model_id}")
                             return active
+                        else:
+                            logger.warning("_ensure_active_model: Gemini entry missing model_id")
                     except Exception as e:
-                        logger.warning(f"_ensure_active_model: failed to init Gemini: {e}")
+                        logger.error(f"_ensure_active_model: failed to init Gemini: {e}")
+                        # Log to help users debug API key issues
+                        if 'API key' in str(e) or 'expired' in str(e).lower():
+                            logger.error(f"_ensure_active_model: Gemini API key issue detected. Check that your API key is valid and not expired.")
+                        return None
+                else:
+                    if not genai:
+                        logger.debug("_ensure_active_model: genai library not available")
+                    if not gemini_api_key:
+                        logger.debug("_ensure_active_model: No Gemini API key provided (not in RAG or .env)")
 
             if model_type in ('claude', 'anthropic'):
                 claude_api_key = active.get('api_key') or os.getenv('LLM_CLAUDE_HAIKU_3.5_API_KEY')
@@ -466,14 +617,192 @@ class LLMService:
                     except Exception as e:
                         logger.warning(f"_ensure_active_model: failed to init Claude: {e}")
 
+            if model_type in ('gpt', 'openai'):
+                openai_api_key = active.get('api_key') or os.getenv('OPENAI_API_KEY')
+                if OpenAIClient and openai_api_key:
+                    try:
+                        self.openai_client = OpenAIClient(api_key=openai_api_key)
+                        self.openai_model_id = active.get('model_id') or 'gpt-4o'
+                        self.openai_api_key = openai_api_key
+                        self.model_type = 'openai'
+                        logger.info(f"✓ Initialized OpenAI from RAG: {self.openai_model_id}")
+                        return active
+                    except Exception as e:
+                        logger.warning(f"_ensure_active_model: failed to init OpenAI: {e}")
+
             logger.warning("_ensure_active_model: found an LLM entry but could not initialize a client")
             return None
         except Exception as e:
             logger.error(f"_ensure_active_model error: {e}")
             return None
     
+    # ============================================================================
+    # DATABASE SCHEMA VALIDATION HELPERS
+    # ============================================================================
+    
+    def _extract_schema_from_rag(self):
+        """
+        Extract available tables and columns from RAG database.
+        Returns: dict with 'tables' (list of table names) and 'columns' (dict: table -> column list)
+        """
+        try:
+            if not self.rag_db:
+                return {'tables': [], 'columns': {}}
+            
+            # Get all business rules with meta_type='table_comprehensive'
+            all_rules = self.rag_db.get_all_rules() or []
+            
+            schema_dict = {
+                'tables': [],
+                'columns': {}
+            }
+            
+            for rule in all_rules:
+                metadata = rule.get('metadata', {})
+                if metadata.get('meta_type') == 'table_comprehensive':
+                    # Extract table name from category format: "{db_id}_{table_name}"
+                    category = metadata.get('category', '')
+                    if category:
+                        parts = category.rsplit('_', 1)
+                        if len(parts) == 2:
+                            table_name = parts[1]
+                            schema_dict['tables'].append(table_name)
+                            
+                            # Extract columns from rule content (look for "Columns:" section)
+                            content = rule.get('content', '')
+                            columns = []
+                            try:
+                                # Parse columns from the "Columns:" section
+                                if 'Columns:' in content:
+                                    columns_start = content.index('Columns:') + len('Columns:')
+                                    # Find next section header
+                                    sections = ['FOREIGN KEY RELATIONSHIPS', 'RELATIONSHIPS', 'SCHEMA', 'SAMPLE DATA', 'BUSINESS RULE']
+                                    columns_end = len(content)
+                                    for section in sections:
+                                        try:
+                                            idx = content.index(section, columns_start)
+                                            if idx > columns_start and idx < columns_end:
+                                                columns_end = idx
+                                        except ValueError:
+                                            pass
+                                    
+                                    columns_text = content[columns_start:columns_end]
+                                    
+                                    # Extract column names (format: "  - column_name: type, ...")
+                                    for line in columns_text.split('\n'):
+                                        line = line.strip()
+                                        if line.startswith('- '):
+                                            col_name = line[2:].split(':')[0].split('(')[0].split('→')[0].strip()
+                                            if col_name:
+                                                columns.append(col_name)
+                            except Exception as e:
+                                logger.debug(f"Error parsing columns for {table_name}: {e}")
+                            
+                            schema_dict['columns'][table_name] = columns
+            
+            logger.info(f"[SCHEMA_VALIDATION] Extracted {len(schema_dict['tables'])} tables from RAG")
+            return schema_dict
+        
+        except Exception as e:
+            logger.error(f"Error extracting schema from RAG: {e}")
+            return {'tables': [], 'columns': {}}
+    
+    def _extract_table_references(self, sql_query: str) -> set:
+        """
+        Extract table names from a SQL query.
+        Returns: set of table names referenced in the query
+        """
+        import re
+        
+        if not sql_query:
+            return set()
+        
+        try:
+            # Normalize SQL
+            sql = sql_query.upper()
+            
+            # Remove comments
+            sql = re.sub(r'--.*?$', '', sql, flags=re.MULTILINE)
+            sql = re.sub(r'/\*.*?\*/', '', sql, flags=re.DOTALL)
+            
+            # Extract table references using regex patterns
+            tables = set()
+            
+            # Pattern 1: FROM table_name or JOIN table_name
+            pattern1 = r'\b(?:FROM|JOIN|INNER\s+JOIN|LEFT\s+JOIN|RIGHT\s+JOIN|FULL\s+JOIN|CROSS\s+JOIN)\s+([a-zA-Z_][a-zA-Z0-9_]*)'
+            for match in re.finditer(pattern1, sql):
+                table = match.group(1).lower()
+                if table not in ('SELECT', 'WHERE', 'GROUP', 'ORDER', 'LIMIT', 'VALUES'):
+                    tables.add(table)
+            
+            # Pattern 2: INTO table_name (INSERT)
+            pattern2 = r'\bINSERT\s+INTO\s+([a-zA-Z_][a-zA-Z0-9_]*)'
+            for match in re.finditer(pattern2, sql):
+                tables.add(match.group(1).lower())
+            
+            # Pattern 3: UPDATE table_name
+            pattern3 = r'\bUPDATE\s+([a-zA-Z_][a-zA-Z0-9_]*)'
+            for match in re.finditer(pattern3, sql):
+                tables.add(match.group(1).lower())
+            
+            # Pattern 4: DELETE FROM table_name
+            pattern4 = r'\bDELETE\s+FROM\s+([a-zA-Z_][a-zA-Z0-9_]*)'
+            for match in re.finditer(pattern4, sql):
+                tables.add(match.group(1).lower())
+            
+            logger.debug(f"[SQL_VALIDATION] Extracted tables from SQL: {tables}")
+            return tables
+        
+        except Exception as e:
+            logger.warning(f"Error extracting table references from SQL: {e}")
+            return set()
+    
+    def _validate_sql_against_schema(self, sql_query: str, available_tables: list) -> dict:
+        """
+        Validate that SQL query only uses available tables.
+        
+        Args:
+            sql_query: SQL query to validate
+            available_tables: List of valid table names
+        
+        Returns:
+            dict with 'valid' (bool), 'invalid_tables' (set), and 'message' (str)
+        """
+        if not sql_query:
+            return {'valid': True, 'invalid_tables': set(), 'message': 'No SQL query to validate'}
+        
+        try:
+            referenced_tables = self._extract_table_references(sql_query)
+            available_tables_lower = {t.lower() for t in available_tables}
+            
+            invalid_tables = referenced_tables - available_tables_lower
+            
+            if invalid_tables:
+                message = f"SQL references non-existent tables: {', '.join(sorted(invalid_tables))}"
+                logger.warning(f"[SQL_VALIDATION] FAILED: {message}")
+                return {
+                    'valid': False,
+                    'invalid_tables': invalid_tables,
+                    'message': message
+                }
+            
+            logger.info(f"[SQL_VALIDATION] PASSED: All referenced tables are valid")
+            return {
+                'valid': True,
+                'invalid_tables': set(),
+                'message': 'SQL query is valid'
+            }
+        
+        except Exception as e:
+            logger.error(f"Error validating SQL: {e}")
+            return {
+                'valid': False,
+                'invalid_tables': set(),
+                'message': f'Validation error: {str(e)}'
+            }
+    
     def _build_system_prompt(self, business_rules):
-        """Build system prompt with business rules."""
+        """Build system prompt with business rules and database schema constraints."""
         # Handle None value for business_rules
         if business_rules is None:
             business_rules = []
@@ -483,6 +812,37 @@ class LLMService:
             for rule in business_rules if rule.get('is_active')
         ])
         
+        # Extract schema from RAG for constraint enforcement
+        schema = self._extract_schema_from_rag()
+        available_tables = schema.get('tables', [])
+        
+        # Build database constraints section
+        constraint_section = ""
+        if available_tables:
+            tables_list = ", ".join(sorted(available_tables))
+            constraint_section = f"""
+════════════════════════════════════════════════════════════════
+⚠️  CRITICAL: DATABASE STRUCTURE ENFORCEMENT
+════════════════════════════════════════════════════════════════
+
+You MUST ONLY suggest SQL queries that use the following tables:
+{tables_list}
+
+CRITICAL RULES:
+1. ONLY reference tables listed above in SQL queries
+2. If a user asks for data from a table NOT in the list above, respond with:
+   "I cannot suggest a query for that table because it does not exist in the connected database."
+3. Always validate that table names exist before suggesting queries
+4. If you cannot fulfill a request with available tables, explain why
+5. NEVER invent or assume table names - only use what's listed above
+
+If user requests data from tables not in the list, respond clearly:
+- What the user asked for
+- Which table(s) they requested
+- Why it's not available (not in connected database)
+- What alternative tables might contain similar data (if any)
+"""
+        
         return f"""You are an intelligent assistant that understands natural language prompts 
 and takes actions on behalf of users. 
 
@@ -490,6 +850,8 @@ IMPORTANT: You MUST maintain awareness of the conversation history provided belo
 When users reference "the chat", "previous", "that query", "check", or similar terms, 
 they are referring to earlier messages in THIS CONVERSATION. Always look back at the conversation 
 history to understand context and make decisions.
+
+{constraint_section}
 
 BUSINESS RULES (MANDATORY):
 {rules_text}
@@ -517,6 +879,7 @@ For each prompt, you MUST:
 4. If it's a database action, provide the SQL query
 5. Extract parameters needed for the action
 6. NEVER ask for clarification if the information is available in conversation history
+7. VALIDATE that all tables in SQL queries exist in the connected database
 
 Format your response as:
 UNDERSTANDING: [What you understand, including reference to prior context if applicable]
@@ -673,7 +1036,7 @@ CURRENT USER REQUEST:
         return full or None
     
     def _parse_response(self, response_text):
-        """Parse LLM response to extract structured data."""
+        """Parse LLM response to extract structured data and validate SQL queries."""
         # Safety check for None response
         if not response_text:
             response_text = ("UNDERSTANDING: Unable to get a response from the LLM.\n"
@@ -727,6 +1090,45 @@ CURRENT USER REQUEST:
                     parsed['sql_query'] = rt
                     parsed['action_type'] = 'DATABASE_QUERY'
             
+            # ═══════════════════════════════════════════════════════════════
+            # DETERMINE QUERY MODE AND SET APPROPRIATE ACTION TYPE
+            # ═══════════════════════════════════════════════════════════════
+            if parsed['sql_query']:
+                # Check database query mode
+                self._load_active_database_mode()  # Refresh mode in case settings changed
+                
+                if self.active_db_query_mode == 'api':
+                    # For API Query mode, query the local RAG database instead of direct SQL
+                    parsed['action_type'] = 'RAG_QUERY'
+                    logger.info(f"[MODE CHECK] Active database in API Query mode → Using RAG_QUERY")
+                else:
+                    # For Direct mode, use standard database query
+                    parsed['action_type'] = 'DATABASE_QUERY'
+                    logger.info(f"[MODE CHECK] Active database in Direct mode → Using DATABASE_QUERY")
+            
+            # ═══════════════════════════════════════════════════════════════
+            # VALIDATE SQL QUERY AGAINST SCHEMA
+            # ═══════════════════════════════════════════════════════════════
+            if parsed['sql_query'] and parsed['action_type'] == 'DATABASE_QUERY':
+                schema = self._extract_schema_from_rag()
+                available_tables = schema.get('tables', [])
+                
+                if available_tables:
+                    validation_result = self._validate_sql_against_schema(
+                        parsed['sql_query'],
+                        available_tables
+                    )
+                    
+                    if not validation_result['valid']:
+                        # Add validation warning to explanation
+                        warning = f"\n\n⚠️  VALIDATION WARNING: {validation_result['message']}"
+                        warning += f"\nAvailable tables: {', '.join(sorted(available_tables))}"
+                        parsed['explanation'] += warning
+                        
+                        logger.warning(f"[SQL_VALIDATION] LLM suggested invalid SQL: {validation_result['message']}")
+                    else:
+                        logger.info(f"[SQL_VALIDATION] LLM SQL suggestion validated successfully")
+            
             # Extract parameters
             if 'PARAMETERS:' in response_text:
                 params = response_text.split('PARAMETERS:')[1].split('CONFIDENCE:')[0].strip()
@@ -765,6 +1167,10 @@ CURRENT USER REQUEST:
             'database query': 'DATABASE_QUERY',
             'db query': 'DATABASE_QUERY',
             'sql': 'DATABASE_QUERY',
+            'rag query': 'RAG_QUERY',
+            'rag_query': 'RAG_QUERY',
+            'local query': 'RAG_QUERY',
+            'vector query': 'RAG_QUERY',
             'email': 'EMAIL',
             'email action': 'EMAIL',
             'send email': 'EMAIL',

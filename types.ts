@@ -24,6 +24,31 @@ export interface ActionData {
   data?: any;
 }
 
+export interface TableConfig {
+  name: string;
+  enabled: boolean;
+  columns: string[];
+  query_template: string;
+  sync_interval: number; // Minutes
+  conditions: Record<string, any>;
+  sample_count?: number;
+  foreign_keys?: ForeignKey[];
+  indexes?: Index[];
+  primary_keys?: string[];
+}
+
+export interface ForeignKey {
+  column: string;
+  references_table: string;
+  references_column: string;
+}
+
+export interface Index {
+  name: string;
+  columns: string[];
+  type: string;
+}
+
 export interface DatabaseSetting {
   id: string;
   name: string;
@@ -33,7 +58,15 @@ export interface DatabaseSetting {
   database: string;
   username?: string;
   is_active: boolean;
+  // API-Mediated RAG Architecture fields
+  query_mode?: 'direct' | 'api'; // 'direct' = direct SQL, 'api' = vector DB
+  selected_tables?: Record<string, TableConfig>;
+  sync_interval?: number; // Global sync interval in minutes
+  last_sync?: string; // ISO datetime
+  vector_db_collection?: string; // ChromaDB collection name
+  ingestion_config?: Record<string, any>;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface LLMModel {

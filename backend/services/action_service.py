@@ -18,6 +18,8 @@ from backend.utils.logger import setup_logger
 from backend.utils.database import DatabaseConnector
 from backend.utils.url_reader import URLReader
 from backend.services.result_formatter import ResultFormatter
+from backend.services.query_router import get_query_router
+from backend.services.settings_service import SettingsService
 
 logger = setup_logger(__name__)
 
@@ -87,6 +89,10 @@ class ActionService:
             'database_query': 'DATABASE_QUERY',
             'db query': 'DATABASE_QUERY',
             'sql': 'DATABASE_QUERY',
+            'rag query': 'RAG_QUERY',
+            'rag_query': 'RAG_QUERY',
+            'local query': 'RAG_QUERY',
+            'vector query': 'RAG_QUERY',
             'display data': 'DISPLAY_DATA',
             'display_data': 'DISPLAY_DATA',
             'email': 'EMAIL',
@@ -128,7 +134,7 @@ class ActionService:
 
             # Enforce allowed action types to avoid LLM-generated exotic types
             allowed_actions = {
-                'DATABASE_QUERY', 'DISPLAY_DATA', 'PROCEDURAL_PLAN', 'EMAIL', 'URL_READING',
+                'DATABASE_QUERY', 'RAG_QUERY', 'DISPLAY_DATA', 'PROCEDURAL_PLAN', 'EMAIL', 'URL_READING',
                 'API_CALL', 'SCHEDULED_ACTIVITY', 'REPORT', 'NONE'
             }
             if action_type_normalized not in allowed_actions:
@@ -149,6 +155,8 @@ class ActionService:
             
             if action_type_normalized == 'DATABASE_QUERY':
                 result = self._execute_database_query(action_data)
+            elif action_type_normalized == 'RAG_QUERY':
+                result = self._execute_rag_query(action_data)
             elif action_type_normalized == 'DISPLAY_DATA':
                 result = self._execute_display_data(action_data)
             elif action_type_normalized == 'PROCEDURAL_PLAN':
@@ -175,10 +183,11 @@ class ActionService:
             # Update history with result - store summary only to avoid DB packet size issues
             history.status = 'success'
             
-            # For database queries with large results, store summary levels only
-            if action_type_normalized == 'DATABASE_QUERY' and formatted_result.get('row_count', 0) > 100:
+            # For database/RAG queries with large results, store summary levels only
+            if action_type_normalized in ['DATABASE_QUERY', 'RAG_QUERY'] and formatted_result.get('row_count', 0) > 100:
                 history.result = {
                     'status': 'success',
+                    'query_type': formatted_result.get('query_type', 'Query'),
                     'summary_levels': formatted_result.get('summary_levels', {}),
                     'row_count': formatted_result.get('row_count', 0),
                     'column_count': formatted_result.get('column_count', 0),
@@ -205,7 +214,12 @@ class ActionService:
             raise
     
     def _execute_database_query(self, action_data):
-        """Execute a database query."""
+        """
+        Execute a database query.
+        
+        Routes to either direct SQL query or vector database semantic search
+        based on the database's configured query mode.
+        """
         try:
             db_name = action_data.get('database', 'default')
             # Support both 'query' and 'sql_query' keys
@@ -217,8 +231,30 @@ class ActionService:
             # Remove backticks if present
             query = query.strip().strip('`')
             
-            logger.info(f"→ Executing database query: {query[:100]}...")
-            result = self.db_connector.execute_query(db_name, query)
+            logger.info(f"→ Database query received from LLM: {query[:100]}...")
+            
+            # Get the query router to handle both direct and API modes
+            query_router = get_query_router()
+            
+            # Get the active database setting to check query mode
+            settings_service = SettingsService()
+            database_setting = None
+            
+            # Try to get specific database or use active one
+            if db_name and db_name != 'default':
+                all_settings = settings_service.get_database_settings()
+                database_setting = next((s for s in all_settings if s.get('name') == db_name), None)
+            
+            if not database_setting:
+                database_setting = settings_service.get_active_database()
+            
+            if not database_setting:
+                raise ValueError("No database configured")
+            
+            query_mode = database_setting.get('query_mode', 'direct')
+            
+            # Execute query using the appropriate mode
+            result = query_router.execute_query(query, database_setting)
             
             # Convert datetime objects to ISO format strings for JSON serialization
             serializable_rows = []
@@ -237,7 +273,8 @@ class ActionService:
                         serializable_rows.append(row)
             
             total_rows = len(serializable_rows)
-            logger.info(f"✓ Query executed: {total_rows} rows returned")
+            query_type = "API (Vector DB)" if query_mode == 'api' else "Direct SQL"
+            logger.info(f"✓ {query_type} query executed: {total_rows} rows/results returned")
             
             # Limit stored result to first 100 rows to avoid MySQL packet size issues
             # Full result will be sent to frontend but truncated for DB storage
@@ -252,6 +289,77 @@ class ActionService:
         
         except Exception as e:
             logger.error(f"Error executing database query: {str(e)}")
+            raise
+    
+    def _execute_rag_query(self, action_data):
+        """
+        Execute a RAG (Retrieval-Augmented Generation) query.
+        
+        Queries the vector/RAG database for semantically similar content
+        instead of executing direct SQL queries.
+        """
+        try:
+            db_name = action_data.get('database', 'default')
+            # Support both 'query' and 'sql_query' keys
+            query = action_data.get('sql_query') or action_data.get('query')
+            
+            if not query:
+                raise ValueError("Query is required (provide 'sql_query' or 'query')")
+            
+            # Remove backticks if present
+            query = query.strip().strip('`')
+            
+            logger.info(f"→ RAG query received: {query[:100]}...")
+            
+            # Get the active database setting to access vector DB
+            settings_service = SettingsService()
+            database_setting = None
+            
+            # Try to get specific database or use active one
+            if db_name and db_name != 'default':
+                all_settings = settings_service.get_database_settings()
+                database_setting = next((s for s in all_settings if s.get('name') == db_name), None)
+            
+            if not database_setting:
+                database_setting = settings_service.get_active_database()
+            
+            if not database_setting:
+                raise ValueError("No database configured")
+            
+            # Use the query router to execute vector search
+            query_router = get_query_router()
+            results = query_router.execute_query(query, database_setting)
+            
+            # Convert datetime objects to ISO format strings for JSON serialization
+            serializable_rows = []
+            if results:
+                for row in results:
+                    if isinstance(row, dict):
+                        serializable_row = {}
+                        for key, value in row.items():
+                            # Convert datetime to ISO format string
+                            if hasattr(value, 'isoformat'):
+                                serializable_row[key] = value.isoformat()
+                            else:
+                                serializable_row[key] = value
+                        serializable_rows.append(serializable_row)
+                    else:
+                        serializable_rows.append(row)
+            
+            total_results = len(serializable_rows)
+            logger.info(f"✓ Vector DB search completed: {total_results} relevant chunks found")
+            
+            # Return all results to frontend for display
+            return {
+                'rows': serializable_rows,
+                'row_count': total_results,
+                'query_type': 'Vector Database Search (RAG)',
+                'is_rag_query': True,
+                'message': f"Found {total_results} relevant chunks from the vector database"
+            }
+        
+        except Exception as e:
+            logger.error(f"Error executing RAG query: {str(e)}")
             raise
     
     def _execute_email(self, action_data):

@@ -1,6 +1,7 @@
 """RAG-related models."""
 from datetime import datetime
-from sqlalchemy.dialects.postgresql import JSON, ARRAY
+from sqlalchemy import JSON
+ARRAY = None  # Will use alternatives for non-PostgreSQL
 from backend.models import db
 
 

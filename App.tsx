@@ -166,6 +166,13 @@ function App() {
     }))
   }
 
+  const handleViewChat = () => {
+    setState(prev => ({
+      ...prev,
+      currentView: 'chat'
+    }))
+  }
+
   const handleViewRAG = () => {
     setState(prev => ({
       ...prev,
@@ -184,13 +191,6 @@ function App() {
     } catch (error) {
       console.error('Search error:', error)
     }
-  }
-
-  const handleViewChat = () => {
-    setState(prev => ({
-      ...prev,
-      currentView: 'chat'
-    }))
   }
 
   const handleActionSuggested = (action: any) => {
@@ -282,6 +282,7 @@ function App() {
           onDeleteConversation={handleDeleteConversation}
           onClearAll={handleClearAllConversations}
           onViewSettings={handleViewSettings}
+          onViewChat={handleViewChat}
           onViewRAG={handleViewRAG}
           currentView={state.currentView}
           onToggleCollapse={() => setSidebarCollapsed(true)}

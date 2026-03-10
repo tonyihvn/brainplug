@@ -12,6 +12,7 @@ interface SidebarProps {
   onClearAll: () => void
   onViewSettings: () => void
   onViewRAG: () => void
+  onViewChat?: () => void
   currentView: 'chat' | 'settings' | 'rag' | 'search'
   onToggleCollapse?: () => void
   onSearch?: (q: string) => void
@@ -27,12 +28,18 @@ export default function Sidebar({
   onClearAll,
   onViewSettings,
   onViewRAG,
+  onViewChat,
   currentView,
   onToggleCollapse,
   onSearch,
   onMobileSelect,
 }: SidebarProps) {
   const [query, setQuery] = useState('')
+  
+  const handleNewConversation = () => {
+    onNewConversation()
+    if (onViewChat) onViewChat()
+  }
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
     const { showConfirm } = await import('./swal')
@@ -127,7 +134,7 @@ export default function Sidebar({
 
       <div className="app-sidebar-footer">
         <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
-          <button className="btn-primary" onClick={onNewConversation} style={{ flex: 1 }}>
+          <button className="btn-primary" onClick={handleNewConversation} style={{ flex: 1 }}>
             <FiPlus style={{ marginRight: '0.5rem' }} />
             New Chat
           </button>

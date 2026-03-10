@@ -27,6 +27,7 @@ export const ENDPOINTS = {
 
 export const ACTION_TYPES = {
   DATABASE_QUERY: 'database_query',
+  RAG_QUERY: 'rag_query',
   EMAIL: 'email',
   URL_READ: 'url_read',
   API_CALL: 'api_call',

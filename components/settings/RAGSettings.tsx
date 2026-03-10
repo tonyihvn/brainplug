@@ -1,47 +1,38 @@
-import React, { useState, useEffect } from 'react'
+﻿import React, { useState, useEffect } from 'react'
 import { BusinessRule } from '../../types'
 import { apiClient } from '../../services/geminiService'
 import { showAlert, showConfirm, showLoading, closeSwal } from '../swal'
 
-interface SchemaTable {
-  table_name: string
-  columns: {
-    name: string
-    type: string
-    nullable: boolean
-    sample_values?: string[]
-  }[]
-  primary_keys?: string[]
-  foreign_keys?: any[]
-}
-
-interface RAGItem {
-  id: string
-  category: string
-  title: string
-  content: string
-  source: string
-  created_at?: string
-}
-
 export default function RAGSettings() {
   const [rules, setRules] = useState<BusinessRule[]>([])
-  const [ragItems, setRagItems] = useState<RAGItem[]>([])
-  const [schemas, setSchemas] = useState<SchemaTable[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadingState, setLoadingState] = useState('Initializing...')
+  const [expandedItemId, setExpandedItemId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    rule_type: 'optional',
+    rule_type: 'optional' as 'compulsory' | 'optional' | 'constraint',
     content: '',
     category: '',
     is_active: true,
   })
-  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingRuleId, setEditingRuleId] = useState<string | null>(null)
 
   useEffect(() => {
-    loadRules()
-    loadRAGItems()
-    loadSchemas()
+    const loadAllData = async () => {
+      try {
+        setLoadingState('Loading configuration...')
+        setLoading(true)
+        await new Promise(resolve => setTimeout(resolve, 300))
+        await loadRules()
+        setLoadingState('Ready')
+        setLoading(false)
+      } catch (error) {
+        console.error('Error loading RAG settings:', error)
+        setLoading(false)
+      }
+    }
+    loadAllData()
   }, [])
 
   const loadRules = async () => {
@@ -50,27 +41,7 @@ export default function RAGSettings() {
       setRules(response.data.data || [])
     } catch (error) {
       console.error('Error loading business rules:', error)
-    }
-  }
-
-  const loadRAGItems = async () => {
-    try {
-      const response = await apiClient.getRAGItems()
-      setRagItems(response.data.data || [])
-    } catch (error) {
-      console.error('Error loading RAG items:', error)
-    }
-  }
-
-  const loadSchemas = async () => {
-    try {
-      const response = await apiClient.getRAGSchema()
-      const schemaData = response.data.data
-      if (schemaData && schemaData.tables) {
-        setSchemas(schemaData.tables)
-      }
-    } catch (error) {
-      console.error('Error loading RAG schemas:', error)
+      setRules([])
     }
   }
 
@@ -84,27 +55,29 @@ export default function RAGSettings() {
 
   const handleSave = async () => {
     try {
-      if (editingId) {
-        await apiClient.updateBusinessRule(editingId, formData)
+      showLoading('Saving rule...')
+      if (editingRuleId) {
+        await apiClient.updateBusinessRule(editingRuleId, formData)
       } else {
         await apiClient.createBusinessRule(formData)
       }
+      closeSwal()
+      await showAlert('Success', editingRuleId ? 'Rule updated' : 'Rule created', 'success')
       await loadRules()
       resetForm()
     } catch (error) {
       console.error('Error saving business rule:', error)
-      showAlert('Error', 'Error saving rule', 'error')
-    } finally {
       closeSwal()
+      showAlert('Error', 'Error saving rule', 'error')
     }
   }
 
   const handleEdit = (rule: BusinessRule) => {
-    setEditingId(rule.id)
+    setEditingRuleId(rule.id)
     setFormData({
       name: rule.name,
       description: rule.description || '',
-      rule_type: rule.rule_type,
+      rule_type: rule.rule_type as 'optional' | 'compulsory' | 'constraint',
       content: rule.content,
       category: rule.category || '',
       is_active: rule.is_active,
@@ -112,22 +85,35 @@ export default function RAGSettings() {
   }
 
   const handleDelete = async (id: string) => {
-    const ok = await showConfirm('Delete this rule?', 'Are you sure you want to delete this rule?')
+    const ok = await showConfirm('Delete this rule?', 'This action cannot be undone.')
     if (!ok) return
     try {
       showLoading('Deleting rule...')
       await apiClient.deleteBusinessRule(id)
       await loadRules()
+      closeSwal()
     } catch (error) {
       console.error('Error deleting rule:', error)
-      showAlert('Error', 'Error deleting rule', 'error')
-    } finally {
       closeSwal()
+      showAlert('Error', 'Error deleting rule', 'error')
+    }
+  }
+
+  const handleToggleActive = async (rule: BusinessRule) => {
+    try {
+      showLoading('Updating rule...')
+      await apiClient.updateBusinessRule(rule.id, { ...rule, is_active: !rule.is_active })
+      await loadRules()
+      closeSwal()
+    } catch (error) {
+      console.error('Error toggling rule:', error)
+      closeSwal()
+      showAlert('Error', 'Error updating rule', 'error')
     }
   }
 
   const resetForm = () => {
-    setEditingId(null)
+    setEditingRuleId(null)
     setFormData({
       name: '',
       description: '',
@@ -138,79 +124,111 @@ export default function RAGSettings() {
     })
   }
 
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'schema':
-        return '#dbeafe'
-      case 'relationship':
-        return '#dcfce7'
-      case 'business_rule':
-        return '#fef3c7'
-      case 'sample_data':
-        return '#f3e8ff'
-      default:
-        return '#e5e7eb'
-    }
-  }
+  const autoGeneratedCount = rules.filter(r => (r as any).metadata?.meta_type === 'table_comprehensive').length
 
-  const getCategoryLabel = (category: string) => {
-    switch (category) {
-      case 'schema':
-        return '📋 Schema'
-      case 'relationship':
-        return '🔗 Relationship'
-      case 'business_rule':
-        return '📏 Business Rule'
-      case 'sample_data':
-        return '📊 Sample Data'
-      default:
-        return '📝 Custom'
-    }
+  // Loading overlay
+  if (loading) {
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999
+      }}>
+        <div style={{
+          backgroundColor: 'white',
+          padding: '2rem',
+          borderRadius: '8px',
+          boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+          textAlign: 'center',
+          minWidth: '300px'
+        }}>
+          <div style={{
+            fontSize: '2rem',
+            marginBottom: '1rem',
+            animation: 'spin 2s linear infinite'
+          }}>
+            ⚙️
+          </div>
+          <h3 style={{ margin: '0 0 0.5rem 0', color: '#1f2937' }}>Loading Configuration</h3>
+          <p style={{ margin: '0', color: '#6b7280', fontSize: '0.9rem' }}>{loadingState}</p>
+          <div style={{
+            marginTop: '1rem',
+            height: '4px',
+            backgroundColor: '#e5e7eb',
+            borderRadius: '2px',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              height: '100%',
+              backgroundColor: '#3b82f6',
+              animation: 'progress 2s ease-in-out infinite',
+              width: '100%'
+            }}></div>
+          </div>
+          <style>{`
+            @keyframes spin {
+              from { transform: rotate(0deg); }
+              to { transform: rotate(360deg); }
+            }
+            @keyframes progress {
+              0% { width: 0%; }
+              50% { width: 100%; }
+              100% { width: 0%; }
+            }
+          `}</style>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div>
       <h3>RAG & Business Rules Management</h3>
       <p style={{ marginBottom: '1.5rem', color: '#718096' }}>
-        Define business rules that are automatically included in LLM context. Database schemas are auto-populated when you connect a new database.
+        Database tables are automatically documented when you connect a new database. Manage and customize these rules below.
       </p>
 
-      {/* Auto-Generated RAG Items Summary */}
-      <div style={{ marginBottom: '2rem', padding: '1rem', backgroundColor: '#f0fdf4', borderRadius: '0.5rem', borderLeft: '4px solid #22c55e' }}>
-        <h4 style={{ margin: '0 0 0.5rem 0' }}>Auto-Generated RAG Items</h4>
-        <p style={{ color: '#718096', margin: '0 0 1rem 0' }}>
-          {ragItems.length > 0 
-            ? `${ragItems.length} auto-generated items from database schema. Each table gets Schema, Relationship, and Sample Data entries.`
-            : 'No auto-generated RAG items yet. Connect a database in the Database Settings to auto-populate.'}
-        </p>
-        
-        {ragItems.length > 0 && (
-          <div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
-              {['schema', 'relationship', 'sample_data'].map(category => {
-                const items = ragItems.filter(item => item.category === category)
-                return (
-                  <div key={category} style={{ padding: '1rem', backgroundColor: 'white', borderRadius: '0.375rem', border: '2px solid', borderColor: getCategoryColor(category) }}>
-                    <h5 style={{ margin: '0 0 0.5rem 0', color: '#1f2937' }}>{getCategoryLabel(category)}</h5>
-                    <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                      <strong>{items.length} items</strong>
-                      <ul style={{ margin: '0.5rem 0', paddingLeft: '1.5rem', maxHeight: '150px', overflowY: 'auto' }}>
-                        {items.map(item => (
-                          <li key={item.id} style={{ wordBreak: 'break-word' }}>
-                            {item.title}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+      {autoGeneratedCount > 0 && (
+        <div style={{
+          marginBottom: '2rem',
+          padding: '1rem',
+          backgroundColor: '#f0fdf4',
+          border: '1px solid #86efac',
+          borderLeft: '4px solid #22c55e',
+          borderRadius: '0.5rem'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+            <span style={{ fontSize: '1.5rem' }}>✓</span>
+            <h4 style={{ margin: 0, color: '#15803d' }}>Auto-Generated Database Documentation</h4>
+            <span style={{
+              marginLeft: 'auto',
+              backgroundColor: '#dcfce7',
+              color: '#166534',
+              padding: '0.25rem 0.75rem',
+              borderRadius: '1rem',
+              fontSize: '0.875rem',
+              fontWeight: 'bold'
+            }}>
+              {autoGeneratedCount} table{autoGeneratedCount !== 1 ? 's' : ''}
+            </span>
           </div>
-        )}
-      </div>
+          <p style={{ margin: '0.5rem 0 0 0', color: '#166534', fontSize: '0.9rem' }}>
+            Your database tables have been automatically documented with schemas, relationships, and sample data. View and customize them below.
+          </p>
+        </div>
+      )}
 
-      <form>
+      <form className="rag-form">
+        <h4 style={{ marginTop: editingRuleId ? '0' : '2rem' }}>
+          {editingRuleId ? '✎ Edit Business Rule' : '➕ Create New Business Rule'}
+        </h4>
         <div className="form-group-row">
           <div className="form-group">
             <label>Rule Name</label>
@@ -280,102 +298,204 @@ export default function RAGSettings() {
 
         <div className="form-actions">
           <button type="button" className="btn-save" onClick={handleSave}>
-            {editingId ? 'Update Rule' : 'Add Rule'}
+            {editingRuleId ? '💾 Update Rule' : '➕ Create Rule'}
           </button>
-          <button type="button" className="btn-cancel" onClick={resetForm}>
-            Clear
-          </button>
+          {editingRuleId && (
+            <button type="button" className="btn-cancel" onClick={resetForm}>
+              ✕ Cancel Editing
+            </button>
+          )}
         </div>
       </form>
 
       <div style={{ marginTop: '2rem' }}>
-        <h4>Business Rules</h4>
+        <h4>All Business Rules {rules.length > 0 && <span style={{ fontSize: '0.875rem', color: '#718096' }}>({rules.length})</span>}</h4>
+        
         {rules.length === 0 ? (
-          <p style={{ color: '#718096' }}>No rules defined yet</p>
+          <p style={{ color: '#718096', textAlign: 'center', padding: '2rem', backgroundColor: '#f9fafb', borderRadius: '6px' }}>
+            No business rules yet. Create one above or connect a database to auto-generate rules.
+          </p>
         ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Category</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rules.map(rule => (
-                <tr key={rule.id}>
-                  <td>
-                    <strong>{rule.name}</strong>
-                    <div style={{ fontSize: '0.875rem', color: '#718096' }}>{rule.description}</div>
-                  </td>
-                  <td>{rule.rule_type}</td>
-                  <td>{rule.category || '-'}</td>
-                  <td>
-                    <span className={`status-badge ${rule.is_active ? 'status-active' : 'status-inactive'}`}>
-                      {rule.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="table-actions">
-                      <button className="btn-edit" onClick={() => handleEdit(rule)}>
-                        Edit
-                      </button>
-                      <button className="btn-delete" onClick={() => handleDelete(rule.id)}>
-                        Delete
-                      </button>
+          <div style={{ display: 'grid', gap: '1rem' }}>
+            {rules.map(rule => {
+              const isExpanded = expandedItemId === rule.id
+              const isAutoGenerated = (rule as any).metadata?.meta_type === 'table_comprehensive'
+              
+              return (
+                <div
+                  key={rule.id}
+                  style={{
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '6px',
+                    overflow: 'hidden',
+                    backgroundColor: rule.is_active ? '#fff' : '#f9fafb'
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: '1rem',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      justifyContent: 'space-between',
+                      cursor: 'pointer',
+                      backgroundColor: rule.is_active ? '#fff' : '#f3f4f6',
+                      transition: 'background-color 0.2s'
+                    }}
+                    onClick={() => setExpandedItemId(isExpanded ? null : rule.id)}
+                  >
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                        <span style={{ fontSize: '1rem' }}>{isExpanded ? '▼' : '▶'}</span>
+                        <strong style={{ color: '#1f2937' }}>{rule.name}</strong>
+                        {isAutoGenerated && (
+                          <span style={{
+                            padding: '0.25rem 0.5rem',
+                            backgroundColor: '#dbeafe',
+                            color: '#0369a1',
+                            borderRadius: '3px',
+                            fontSize: '0.75rem',
+                            fontWeight: 'bold'
+                          }}>
+                            🔄 Auto-Generated
+                          </span>
+                        )}
+                        {!rule.is_active && (
+                          <span style={{
+                            padding: '0.25rem 0.5rem',
+                            backgroundColor: '#f3f4f6',
+                            color: '#6b7280',
+                            borderRadius: '3px',
+                            fontSize: '0.75rem'
+                          }}>
+                            Inactive
+                          </span>
+                        )}
+                      </div>
+                      <div style={{
+                        display: 'flex',
+                        gap: '1rem',
+                        fontSize: '0.875rem',
+                        color: '#6b7280'
+                      }}>
+                        <span><strong>Type:</strong> {rule.rule_type}</span>
+                        {rule.category && <span><strong>Category:</strong> {rule.category}</span>}
+                      </div>
+                      {rule.description && (
+                        <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.9rem', color: '#4b5563' }}>
+                          {rule.description}
+                        </p>
+                      )}
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    <div style={{
+                      fontSize: '1.5rem',
+                      marginLeft: '1rem',
+                      color: isExpanded ? '#3b82f6' : '#d1d5db'
+                    }}>
+                      {isExpanded ? '▼' : '▶'}
+                    </div>
+                  </div>
+
+                  {isExpanded && (
+                    <div style={{
+                      padding: '1rem',
+                      borderTop: '1px solid #e5e7eb',
+                      backgroundColor: '#f9fafb'
+                    }}>
+                      <div style={{ marginBottom: '1rem' }}>
+                        <h6 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#1f2937' }}>Rule Content</h6>
+                        <div style={{
+                          padding: '1rem',
+                          backgroundColor: '#fff',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '4px',
+                          fontFamily: 'monospace',
+                          fontSize: '0.85rem',
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word',
+                          color: '#374151',
+                          maxHeight: '400px',
+                          overflowY: 'auto'
+                        }}>
+                          {rule.content}
+                        </div>
+                      </div>
+
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: '0.5rem'
+                      }}>
+                        <button
+                          onClick={() => handleEdit(rule)}
+                          style={{
+                            padding: '0.5rem 1rem',
+                            backgroundColor: '#3b82f6',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '0.9rem',
+                            fontWeight: 'bold'
+                          }}
+                        >
+                          ✎ Edit
+                        </button>
+                        <button
+                          onClick={() => handleToggleActive(rule)}
+                          style={{
+                            padding: '0.5rem 1rem',
+                            backgroundColor: rule.is_active ? '#ef4444' : '#22c55e',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '0.9rem',
+                            fontWeight: 'bold'
+                          }}
+                        >
+                          {rule.is_active ? '⊘ Deactivate' : '✓ Activate'}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(rule.id)}
+                          style={{
+                            padding: '0.5rem 1rem',
+                            backgroundColor: '#ef4444',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '0.9rem',
+                            fontWeight: 'bold',
+                            gridColumn: '1 / -1'
+                          }}
+                        >
+                          🗑 Delete
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
         )}
       </div>
 
-      <div style={{ marginTop: '2rem' }}>
-        <h4>Schemas</h4>
-        {schemas.length === 0 ? (
-          <p style={{ color: '#718096' }}>No schemas available</p>
-        ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Table</th>
-                <th>Columns</th>
-                <th>Primary Keys</th>
-                <th>Foreign Keys</th>
-              </tr>
-            </thead>
-            <tbody>
-              {schemas.map(s => (
-                <tr key={s.table_name}>
-                  <td>
-                    <strong>{s.table_name}</strong>
-                  </td>
-                  <td>
-                    <div style={{ fontSize: '0.9rem', color: '#374151' }}>
-                      {s.columns && s.columns.length > 0 ? (
-                        <ul style={{ margin: 0, paddingLeft: '1rem', maxHeight: 120, overflowY: 'auto' }}>
-                          {s.columns.map((c: any) => (
-                            <li key={c.name} style={{ wordBreak: 'break-word' }}>
-                              <strong>{c.name}</strong> <span style={{ color: '#6b7280' }}>({c.type})</span>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <span style={{ color: '#718096' }}>No columns</span>
-                      )}
-                    </div>
-                  </td>
-                  <td>{(s.primary_keys && s.primary_keys.length) ? s.primary_keys.join(', ') : '-'}</td>
-                  <td>{(s.foreign_keys && s.foreign_keys.length) ? s.foreign_keys.map((fk:any) => `${fk.source_column}→${fk.target_table}.${fk.target_column}`).join('; ') : '-'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+      <div style={{
+        marginTop: '2rem',
+        padding: '1rem',
+        backgroundColor: '#eff6ff',
+        border: '1px solid #93c5fd',
+        borderRadius: '6px',
+        fontSize: '0.9rem',
+        color: '#1e40af'
+      }}>
+        <strong>💡 How it works:</strong>
+        <ul style={{ marginBottom: 0, marginTop: '0.5rem', paddingLeft: '1.5rem' }}>
+          <li><strong>Auto-Generated Rules:</strong> Created when you connect a database. Each contains table schema, relationships, and sample data.</li>
+          <li><strong>Custom Rules:</strong> Create additional rules to train the LLM with domain-specific constraints.</li>
+          <li><strong>Compulsory Rules:</strong> Always included in prompts; use for critical compliance requirements.</li>
+        </ul>
       </div>
     </div>
   )

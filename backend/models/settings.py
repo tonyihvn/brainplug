@@ -1,6 +1,6 @@
 """Settings models for configuration."""
 from datetime import datetime
-from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy import JSON
 from backend.models import db
 
 
@@ -17,7 +17,17 @@ class DatabaseSetting(db.Model):
     username = db.Column(db.String(255))
     password = db.Column(db.String(255))
     is_active = db.Column(db.Boolean, default=False)
+    
+    # API-Mediated RAG Architecture
+    query_mode = db.Column(db.String(20), default='direct')  # 'direct' or 'api'
+    selected_tables = db.Column(JSON, default={})  # Mapping of table_name -> {enabled, query, sync_interval, conditions}
+    sync_interval = db.Column(db.Integer, default=60)  # Minutes between data syncs
+    last_sync = db.Column(db.DateTime)  # Last successful sync
+    vector_db_collection = db.Column(db.String(255))  # ChromaDB collection name for this database
+    ingestion_config = db.Column(JSON, default={})  # Configuration for ETL pipeline
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     def to_dict(self):
         """Convert to dictionary (without password)."""
@@ -30,7 +40,14 @@ class DatabaseSetting(db.Model):
             'database': self.database,
             'username': self.username,
             'is_active': self.is_active,
-            'created_at': self.created_at.isoformat()
+            'query_mode': self.query_mode,
+            'selected_tables': self.selected_tables,
+            'sync_interval': self.sync_interval,
+            'last_sync': self.last_sync.isoformat() if self.last_sync else None,
+            'vector_db_collection': self.vector_db_collection,
+            'ingestion_config': self.ingestion_config,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
         }
 
 

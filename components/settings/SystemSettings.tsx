@@ -1,10 +1,29 @@
 import React, { useState, useEffect } from 'react'
 import { apiClient } from '../../services/geminiService'
 
+interface RestrictedKeywords {
+  DROP: boolean
+  DELETE: boolean
+  INSERT: boolean
+  ALTER: boolean
+  SELECT: boolean
+  UPDATE: boolean
+  TRUNCATE: boolean
+}
+
 export default function SystemSettings() {
   const [smtp, setSmtp] = useState({ host: '', port: '', username: '', password: '' })
   const [imap, setImap] = useState({ host: '', port: '', username: '', password: '' })
   const [pop, setPop] = useState({ host: '', port: '', username: '', password: '' })
+  const [restrictedKeywords, setRestrictedKeywords] = useState<RestrictedKeywords>({
+    DROP: true,
+    DELETE: true,
+    INSERT: true,
+    ALTER: true,
+    SELECT: false,
+    UPDATE: true,
+    TRUNCATE: true
+  })
   const [envSaved, setEnvSaved] = useState<string[]>([])
 
   useEffect(() => {
@@ -18,6 +37,9 @@ export default function SystemSettings() {
       if (data.smtp) setSmtp(data.smtp)
       if (data.imap) setImap(data.imap)
       if (data.pop) setPop(data.pop)
+      if (data.restricted_keywords) {
+        setRestrictedKeywords(data.restricted_keywords)
+      }
     } catch (error) {
       console.error('Error loading system settings:', error)
     }
@@ -25,7 +47,12 @@ export default function SystemSettings() {
 
   const handleSaveAll = async () => {
     try {
-      const resp = await apiClient.updateSystemSettings({ smtp, imap, pop })
+      const resp = await apiClient.updateSystemSettings({ 
+        smtp, 
+        imap, 
+        pop,
+        restricted_keywords: restrictedKeywords
+      })
       const saved = resp.data?.data?.env_saved || []
       setEnvSaved(saved)
       alert('System settings updated successfully')
@@ -132,6 +159,33 @@ export default function SystemSettings() {
             )}
           </div>
         </div>
+      </div>
+
+      <div style={{ marginTop: '2rem', padding: '1.5rem', backgroundColor: '#fff5f5', borderRadius: '0.5rem', borderLeft: '4px solid #fc8181' }}>
+        <h4 style={{ marginBottom: '1rem' }}>SQL Query Security</h4>
+        <p style={{ color: '#742a2a', marginBottom: '1rem', fontSize: '0.95rem' }}>
+          Restrict SQL keywords in extraction queries and LLM actions to prevent unauthorized database modifications.
+          Selected keywords will be blocked at both client and server level.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem' }}>
+          {Object.keys(restrictedKeywords).map((keyword) => (
+            <label key={keyword} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}>
+              <input 
+                type="checkbox"
+                checked={restrictedKeywords[keyword as keyof RestrictedKeywords]}
+                onChange={(e) => setRestrictedKeywords(prev => ({
+                  ...prev,
+                  [keyword]: e.target.checked
+                }))}
+                style={{ marginRight: '0.5rem', cursor: 'pointer' }}
+              />
+              <span style={{ fontFamily: 'monospace', fontWeight: '500' }}>{keyword}</span>
+            </label>
+          ))}
+        </div>
+        <small style={{ color: '#742a2a', display: 'block', marginTop: '1rem' }}>
+          When enabled, these keywords will be prevented from running in extraction queries and prevented from being used in LLM-suggested actions.
+        </small>
       </div>
 
       <div style={{ marginTop: '2rem', padding: '1.5rem', backgroundColor: '#f7fafc', borderRadius: '0.5rem' }}>

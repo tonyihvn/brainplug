@@ -329,20 +329,207 @@ class RAGDatabase:
         return self._read_json(self._settings_file)
 
     def delete_database_setting(self, setting_id: str) -> bool:
-        if self.use_qdrant and self.qdrant:
-            try:
-                self.qdrant.delete(collection_name='database_settings', point_ids=[str(setting_id)])
-                return True
-            except Exception:
-                pass
-
+        """Delete database setting and ALL associated data (rules, schemas, ingested data)."""
         try:
-            items = self._read_json(self._settings_file)
-            new_items = [i for i in items if i.get('id') != str(setting_id)]
-            self._write_json(self._settings_file, new_items)
+            # Delete from database_settings collection
+            if self.use_qdrant and self.qdrant:
+                try:
+                    self.qdrant.delete(collection_name='database_settings', point_ids=[str(setting_id)])
+                except Exception:
+                    pass
+            
+            # Delete ALL rules for this database
+            self._delete_all_rules_for_database(setting_id)
+            
+            # Delete ALL schemas for this database
+            self._delete_all_schemas_for_database(setting_id)
+            
+            # Delete all ingested data associated with this database
+            self._delete_ingested_data_for_database(setting_id)
+            
+            # Delete from JSON fallback
+            try:
+                items = self._read_json(self._settings_file)
+                new_items = [i for i in items if i.get('id') != str(setting_id)]
+                self._write_json(self._settings_file, new_items)
+            except Exception as e:
+                logger.warning(f"Error deleting from JSON settings: {e}")
+            
+            logger.info(f"✓ Deleted database setting and all associated data: {setting_id}")
             return True
         except Exception as e:
-            logger.error(f"Error deleting database setting fallback: {e}")
+            logger.error(f"Error in cascade delete for database setting: {e}")
+            return False
+    
+    def _delete_all_rules_for_database(self, database_id: str) -> bool:
+        """Delete ALL rules for a database from all backends (except JSON rules file).)
+        
+        NOTE: rules.json is NOT deleted - it's preserved until user explicitly deletes database.
+        """
+        try:
+            if self.use_qdrant and self.qdrant:
+                try:
+                    self.qdrant.delete(
+                        collection_name='business_rules',
+                        points_selector=qmodels.FilterSelector(
+                            filter=qmodels.Filter(
+                                must=[
+                                    qmodels.FieldCondition(
+                                        key="metadata.database_id",
+                                        match=qmodels.MatchValue(value=database_id)
+                                    )
+                                ]
+                            )
+                        )
+                    )
+                    logger.debug(f"Deleted all rules for database from Qdrant: {database_id}")
+                except Exception as e:
+                    logger.debug(f"Could not delete rules from Qdrant: {e}")
+            
+            # NOTE: Do NOT clean JSON fallback (rules.json) - preserve for user
+            logger.debug(f"Preserved rules.json for database: {database_id}")
+            
+            return True
+        except Exception as e:
+            logger.warning(f"Error deleting all rules for database {database_id}: {e}")
+            return False
+    
+    def _delete_all_schemas_for_database(self, database_id: str) -> bool:
+        """Delete ALL schemas for a database from all backends."""
+        try:
+            if self.use_qdrant and self.qdrant:
+                try:
+                    self.qdrant.delete(
+                        collection_name='schemas',
+                        points_selector=qmodels.FilterSelector(
+                            filter=qmodels.Filter(
+                                must=[
+                                    qmodels.FieldCondition(
+                                        key="metadata.database_id",
+                                        match=qmodels.MatchValue(value=database_id)
+                                    )
+                                ]
+                            )
+                        )
+                    )
+                    logger.debug(f"Deleted all schemas for database from Qdrant: {database_id}")
+                except Exception as e:
+                    logger.debug(f"Could not delete schemas from Qdrant: {e}")
+            
+            # Also clean JSON fallback
+            try:
+                schemas = self._read_json(self._schemas_file)
+                filtered_schemas = []
+                for schema in schemas:
+                    metadata = schema.get('metadata', {})
+                    db_id = metadata.get('database_id') or metadata.get('db_id')
+                    if db_id != database_id:
+                        filtered_schemas.append(schema)
+                self._write_json(self._schemas_file, filtered_schemas)
+                logger.debug(f"Cleaned schemas from JSON store: {database_id}")
+            except Exception as e:
+                logger.debug(f"Could not clean schemas from JSON: {e}")
+            
+            return True
+        except Exception as e:
+            logger.warning(f"Error deleting all schemas for database {database_id}: {e}")
+            return False
+    
+    def _delete_ingested_data_for_database(self, database_id: str) -> bool:
+        """Delete all ingested data (vectors and raw data) for a database."""
+        try:
+            deleted_count = 0
+            
+            if self.use_qdrant and self.qdrant:
+                try:
+                    # List all collections that might contain ingested data
+                    collections = self.qdrant.get_collections()
+                    for collection in collections.collections:
+                        collection_name = collection.name
+                        # Delete vectors with filter on database_id
+                        if collection_name.startswith('ingested_'):
+                            try:
+                                self.qdrant.delete(
+                                    collection_name=collection_name,
+                                    points_selector=qmodels.FilterSelector(
+                                        filter=qmodels.Filter(
+                                            must=[
+                                                qmodels.FieldCondition(
+                                                    key="metadata.database_id",
+                                                    match=qmodels.MatchValue(value=database_id)
+                                                )
+                                            ]
+                                        )
+                                    )
+                                )
+                                logger.debug(f"✓ Deleted ingested data from collection: {collection_name}")
+                                deleted_count += 1
+                            except Exception as e:
+                                logger.debug(f"Could not delete from collection {collection_name}: {e}")
+                except Exception as e:
+                    logger.debug(f"Could not access Qdrant collections: {e}")
+            
+            # Delete file-based raw data backups (JSON format)
+            try:
+                raw_data_file = Path(self.persist_dir) / f"ingested_data_{database_id}.json"
+                if raw_data_file.exists():
+                    raw_data_file.unlink()
+                    logger.debug(f"✓ Deleted raw ingested data file: {raw_data_file.name}")
+                    deleted_count += 1
+            except Exception as e:
+                logger.debug(f"Could not delete raw data file: {e}")
+            
+            # Delete directory-based ingested data (created by ingestion pipeline)
+            try:
+                import shutil
+                ingested_dir = Path(self.persist_dir.parent) / "ingested_data" / database_id
+                if ingested_dir.exists():
+                    shutil.rmtree(ingested_dir)
+                    logger.debug(f"✓ Deleted ingested data directory: {ingested_dir.name}/")
+                    deleted_count += 1
+            except Exception as e:
+                logger.debug(f"Could not delete ingested data directory: {e}")
+            
+            if deleted_count > 0:
+                logger.info(f"✓ Cleaned up {deleted_count} ingested data entries for database: {database_id}")
+            
+            return True
+        except Exception as e:
+            logger.error(f"Error deleting ingested data: {e}")
+            return False
+    
+    def delete_ingested_data_for_table(self, database_id: str, table_name: str) -> bool:
+        """Delete ingested data for a specific table in a database."""
+        try:
+            if self.use_qdrant and self.qdrant:
+                collections = self.qdrant.get_collections()
+                for collection in collections.collections:
+                    collection_name = collection.name
+                    if collection_name.startswith('ingested_'):
+                        try:
+                            self.qdrant.delete(
+                                collection_name=collection_name,
+                                points_selector=qmodels.FilterSelector(
+                                    filter=qmodels.Filter(
+                                        must=[
+                                            qmodels.FieldCondition(
+                                                key="metadata.database_id",
+                                                match=qmodels.MatchValue(value=database_id)
+                                            ),
+                                            qmodels.FieldCondition(
+                                                key="metadata.table_name",
+                                                match=qmodels.MatchValue(value=table_name)
+                                            )
+                                        ]
+                                    )
+                                )
+                            )
+                        except Exception as e:
+                            logger.warning(f"Could not delete table data from {collection_name}: {e}")
+            
+            return True
+        except Exception as e:
+            logger.error(f"Error deleting table ingested data: {e}")
             return False
 
     # ----------------- Business rules -----------------
@@ -474,6 +661,15 @@ class RAGDatabase:
             except Exception:
                 pass
         return self._read_json(self._rules_file)
+    
+    def get_rule(self, rule_id: str) -> Optional[Dict]:
+        """Get a single rule by ID."""
+        try:
+            rules = self.get_all_rules()
+            return next((r for r in rules if r.get('id') == rule_id), None)
+        except Exception as e:
+            logger.error(f"Error getting rule {rule_id}: {str(e)}")
+            return None
 
     def delete_schema(self, table_name: str) -> bool:
         item_id = f"{table_name}_schema"

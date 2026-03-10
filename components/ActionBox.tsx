@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { ActionData } from '../types'
-import { FiCheck, FiX, FiDownload } from 'react-icons/fi'
+import { FiCheck, FiX, FiDownload, FiEdit2 } from 'react-icons/fi'
 import {
   ResponsiveContainer,
   BarChart,
@@ -30,6 +30,9 @@ export default function ActionBox({ action, onConfirm, onTogglePopout }: ActionB
   const [viewMode, setViewMode] = useState<'table' | 'chart'>('table')
   const colors = ['#4f46e5', '#06b6d4', '#f97316', '#10b981', '#ef4444']
   const [showRaw, setShowRaw] = useState(false)
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [editedSql, setEditedSql] = useState('')
+  const [editedSteps, setEditedSteps] = useState<Step[]>([])
   if (!action) {
     return (
       <div className="action-box">
@@ -44,7 +47,58 @@ export default function ActionBox({ action, onConfirm, onTogglePopout }: ActionB
   }
 
   const handleConfirm = () => {
-    onConfirm(action)
+    if (isEditMode) {
+      // Submit edited SQL
+      const updatedAction = {
+        ...(action as ActionData),
+        sql_query: editedSql
+      }
+      onConfirm(updatedAction)
+      setIsEditMode(false)
+      setEditedSql('')
+    } else {
+      onConfirm(action)
+    }
+  }
+
+  const handleEdit = () => {
+    if (!isEditMode) {
+      // Enter edit mode - copy current SQL to editor
+      setEditedSql((action as ActionData).sql_query || '')
+      setIsEditMode(true)
+    }
+  }
+
+  const handleEditCancel = () => {
+    setIsEditMode(false)
+    setEditedSql('')
+  }
+
+  const handleConfirmAllSteps = () => {
+    if (isEditMode && editedSteps.length > 0) {
+      // Submit edited steps
+      const updatedAction = {
+        ...action,
+        steps: editedSteps
+      }
+      onConfirm(updatedAction)
+      setIsEditMode(false)
+      setEditedSteps([])
+    } else {
+      onConfirm(action)
+    }
+  }
+
+  const handleEditStep = (idx: number, step: Step) => {
+    const newSteps = [...editedSteps]
+    newSteps[idx] = step
+    setEditedSteps(newSteps)
+  }
+
+  const handleEditStepSql = (idx: number, sql: string) => {
+    const newSteps = [...editedSteps]
+    newSteps[idx] = { ...newSteps[idx], sql_query: sql }
+    setEditedSteps(newSteps)
   }
 
   // Helpers
@@ -186,12 +240,36 @@ export default function ActionBox({ action, onConfirm, onTogglePopout }: ActionB
           <div>
             <strong>Planned Steps:</strong>
             <ol style={{ marginTop: 8 }}>
-              {(action as any).steps.map((s: Step, idx: number) => (
-                <li key={idx} style={{ marginBottom: 8 }}>
+              {(isEditMode ? editedSteps.length > 0 ? editedSteps : (action as any).steps : (action as any).steps).map((s: Step, idx: number) => (
+                <li key={idx} style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #e2e8f0' }}>
                   <div><strong>Type:</strong> {s.type}</div>
-                  {s.sql_query && <div style={{ marginTop: 4 }}><strong>Query:</strong>
-                    <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', marginTop: '0.25rem' }}>{s.sql_query}</pre>
-                  </div>}
+                  {s.sql_query && (
+                    <div style={{ marginTop: 4 }}>
+                      <strong>Query:</strong>
+                      {isEditMode ? (
+                        <textarea
+                          value={s.sql_query}
+                          onChange={(e) => handleEditStepSql(idx, e.target.value)}
+                          style={{
+                            width: '100%',
+                            minHeight: '80px',
+                            marginTop: '0.25rem',
+                            padding: '8px',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: '4px',
+                            fontFamily: 'monospace',
+                            fontSize: '0.875rem',
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'break-word'
+                          }}
+                        />
+                      ) : (
+                        <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', marginTop: '0.25rem' }}>
+                          {s.sql_query}
+                        </pre>
+                      )}
+                    </div>
+                  )}
                   {s.parameters && <div style={{ marginTop: 4 }}><strong>Parameters:</strong>
                     <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', marginTop: '0.25rem' }}>{s.parameters}</pre>
                   </div>}
@@ -200,10 +278,34 @@ export default function ActionBox({ action, onConfirm, onTogglePopout }: ActionB
             </ol>
 
             <div style={{ display: 'flex', gap: 8 }}>
-              <button className="btn-confirm" onClick={() => onConfirm(action)} style={{ flex: 1 }}>
-                <FiCheck style={{ marginRight: '0.5rem' }} />
-                Confirm All Steps
-              </button>
+              {!isEditMode ? (
+                <>
+                  <button className="btn-confirm" onClick={handleConfirmAllSteps} style={{ flex: 1 }}>
+                    <FiCheck style={{ marginRight: '0.5rem' }} />
+                    Confirm All Steps
+                  </button>
+                  <button 
+                    className="btn-secondary" 
+                    onClick={handleEdit}
+                    title="Edit SQL queries before confirming"
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                  >
+                    <FiEdit2 style={{ width: '16px' }} />
+                    Edit
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button className="btn-confirm" onClick={handleConfirmAllSteps} style={{ flex: 1 }}>
+                    <FiCheck style={{ marginRight: '0.5rem' }} />
+                    Confirm Edits
+                  </button>
+                  <button className="btn-secondary" onClick={handleEditCancel} style={{ flex: 1 }}>
+                    <FiX style={{ marginRight: '0.5rem' }} />
+                    Cancel
+                  </button>
+                </>
+              )}
             </div>
           </div>
         ) : (
@@ -214,9 +316,29 @@ export default function ActionBox({ action, onConfirm, onTogglePopout }: ActionB
             {(action as ActionData).sql_query && (
               <div style={{ marginTop: '0.5rem' }}>
                 <strong>Query:</strong>
-                <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', marginTop: '0.25rem' }}>
-                  {(action as ActionData).sql_query}
-                </pre>
+                {isEditMode ? (
+                  <textarea
+                    value={editedSql}
+                    onChange={(e) => setEditedSql(e.target.value)}
+                    style={{
+                      width: '100%',
+                      minHeight: '120px',
+                      marginTop: '0.25rem',
+                      padding: '8px',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '4px',
+                      fontFamily: 'monospace',
+                      fontSize: '0.875rem',
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word'
+                    }}
+                    placeholder="Enter or modify SQL query here..."
+                  />
+                ) : (
+                  <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', marginTop: '0.25rem' }}>
+                    {(action as ActionData).sql_query}
+                  </pre>
+                )}
               </div>
             )}
             {(action as ActionData).parameters && (
@@ -229,10 +351,34 @@ export default function ActionBox({ action, onConfirm, onTogglePopout }: ActionB
             )}
 
             <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-              <button className="btn-confirm" onClick={handleConfirm} style={{ flex: 1 }}>
-                <FiCheck style={{ marginRight: '0.5rem' }} />
-                Confirm Action
-              </button>
+              {!isEditMode ? (
+                <>
+                  <button className="btn-confirm" onClick={handleConfirm} style={{ flex: 1 }}>
+                    <FiCheck style={{ marginRight: '0.5rem' }} />
+                    Confirm Action
+                  </button>
+                  <button 
+                    className="btn-secondary" 
+                    onClick={handleEdit}
+                    title="Edit SQL query before confirming"
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                  >
+                    <FiEdit2 style={{ width: '16px' }} />
+                    Edit
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button className="btn-confirm" onClick={handleConfirm} style={{ flex: 1 }}>
+                    <FiCheck style={{ marginRight: '0.5rem' }} />
+                    Confirm Edit
+                  </button>
+                  <button className="btn-secondary" onClick={handleEditCancel} style={{ flex: 1 }}>
+                    <FiX style={{ marginRight: '0.5rem' }} />
+                    Cancel
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}

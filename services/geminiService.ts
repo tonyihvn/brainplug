@@ -54,6 +54,63 @@ class APIClient {
     return this.client.delete(`/settings/database/${id}`)
   }
 
+  async discoverTables(databaseId: string) {
+    return this.client.post('/settings/database/discover-tables', { database_id: databaseId })
+  }
+
+  async getTableRelationships(databaseId: string, tableName: string) {
+    return this.client.post('/settings/database/table-relationships', { database_id: databaseId, table_name: tableName })
+  }
+
+  async discoverDatabaseTables(databaseId: string) {
+    return this.client.post('/settings/database/discover-tables', { database_id: databaseId })
+  }
+
+  async startIngestionJob(databaseId: string) {
+    return this.client.post('/settings/database/start-ingestion', { database_id: databaseId })
+  }
+
+  async getIngestionJobStatus(jobId: string) {
+    return this.client.get(`/settings/database/ingestion-status/${jobId}`)
+  }
+
+  // Data Ingestion Endpoints
+  async configureTableIngestion(config: any) {
+    return this.client.post('/rag/ingest/config', config)
+  }
+
+  async startTableIngestion(ingestionData: any) {
+    return this.client.post('/rag/ingest/start', ingestionData)
+  }
+
+  async deleteIngestedData(databaseId: string) {
+    return this.client.delete(`/rag/ingest/delete/${databaseId}`)
+  }
+
+  async triggerManualIngestion(databaseId: string) {
+    return this.client.post('/rag/ingest/manual', { database_id: databaseId })
+  }
+
+  async getIngestionStatus(databaseId: string) {
+    return this.client.post('/rag/ingest/status', { database_id: databaseId })
+  }
+
+  async getReports() {
+    return this.client.get('/reports')
+  }
+
+  async deleteReport(id: string) {
+    return this.client.delete(`/reports/${id}`)
+  }
+  
+  async post(url: string, data: any) {
+    return this.client.post(url, data)
+  }
+
+  async delete(url: string, data?: any) {
+    return this.client.delete(url, data ? { data } : undefined)
+  }
+
   async getLLMSettings() {
     return this.client.get('/settings/llm')
   }

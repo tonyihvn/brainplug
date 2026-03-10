@@ -15,6 +15,7 @@ from backend.services.llm_service import LLMService
 from backend.services.rag_service import RAGService
 from backend.services.action_service import ActionService
 from backend.services.settings_service import SettingsService
+from backend.utils.database import DatabaseConnector
 import sqlalchemy as sa
 from sqlalchemy.exc import OperationalError as SAOperationalError
 import pymysql
@@ -40,9 +41,9 @@ CORS(app)
 instance_dir = Path(__file__).parent / 'instance'
 instance_dir.mkdir(parents=True, exist_ok=True)
 
-# App database (local SQLite for conversations, messages) - use absolute path
+# App database - use SQLite stored in instance directory
 db_path = instance_dir / 'app.db'
-app_db_url = f'sqlite:///{db_path.as_posix()}'  # Convert path to absolute URL
+app_db_url = f'sqlite:///{db_path.as_posix()}'
 app.config['SQLALCHEMY_DATABASE_URI'] = app_db_url
 logger.info(f"Database URL: {app_db_url}")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -156,6 +157,10 @@ def chat_message():
     and send to LLM for response and action suggestion.
     """
     try:
+        # Check if LLM service is initialized
+        if llm_service is None:
+            return jsonify({'error': 'LLM service not initialized. Please configure an LLM model in Settings.'}), 503
+        
         data = request.json
         user_message = data.get('message', '')
         conversation_id = data.get('conversation_id')
@@ -190,7 +195,7 @@ def chat_message():
         }), 200
     
     except Exception as e:
-        logger.error(f"Error processing message: {str(e)}")
+        logger.error(f"Error processing message: {str(e)}", exc_info=True)
         return jsonify({'error': str(e)}), 500
 
 
@@ -284,7 +289,29 @@ def delete_conversation(conversation_id):
 
 @app.route('/api/settings/database', methods=['GET', 'POST'])
 def database_settings():
-    """Get or update database connection settings."""
+    """
+    Get or update database connection settings.
+    
+    AUTO-RAG GENERATION:
+    - When a database is marked as ACTIVE (is_active=True), automatic RAG generation happens immediately
+    - All tables from the database are scanned and converted to RAG schema items
+    - Relationships and sample data are auto-generated as business rules
+    - When switching to a new database, old database RAG items are automatically cleared
+    - Only ONE database's RAG can be active at a time
+    
+    POST body should include:
+    {
+        "id": "uuid (optional, for update)",
+        "name": "Database Name",
+        "db_type": "mysql|postgres|sqlite",
+        "host": "localhost",
+        "port": 3306,
+        "database": "db_name",
+        "username": "user",
+        "password": "pass",
+        "is_active": true (set to true to trigger auto-RAG generation)
+    }
+    """
     try:
         if request.method == 'DELETE':
             # Support DELETE with id in JSON body for clients that don't use URL param
@@ -326,6 +353,434 @@ def delete_database_setting(setting_id):
         return jsonify({'success': True, 'message': 'Database setting deleted'}), 200
     except Exception as e:
         logger.error(f"Error deleting database setting: {str(e)}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/settings/database/discover-tables', methods=['POST'])
+def discover_tables():
+    """Discover tables from a connected database."""
+    try:
+        data = request.json or {}
+        database_id = data.get('database_id')
+        
+        if not database_id:
+            return jsonify({'error': 'database_id is required'}), 400
+        
+        # Get the database setting from RAG
+        all_settings = settings_service.get_database_settings() or []
+        db_setting = next((s for s in all_settings if s.get('id') == database_id), None)
+        
+        if not db_setting:
+            return jsonify({'error': 'Database setting not found'}), 404
+        
+        # Build connection string
+        connection_string = settings_service._build_connection_string(db_setting)
+        
+        # Get schema from database
+        db_connector = DatabaseConnector()
+        schema = db_connector.get_schema(connection_string)
+        
+        # Transform to frontend format with foreign keys and indexes
+        discovered_tables = []
+        for table in schema.get('tables', []):
+            # Extract foreign key information
+            foreign_keys = []
+            for fk in table.get('foreign_keys', []):
+                foreign_keys.append({
+                    'column': fk.get('constrained_columns', [''])[0] if fk.get('constrained_columns') else '',
+                    'references_table': fk.get('referred_table', ''),
+                    'references_column': fk.get('referred_columns', [''])[0] if fk.get('referred_columns') else ''
+                })
+            
+            # Get indexes by checking column constraints and primary keys
+            indexes = []
+            primary_keys = table.get('primary_keys', [])
+            if primary_keys:
+                indexes.append({
+                    'name': 'PRIMARY KEY',
+                    'columns': primary_keys,
+                    'type': 'primary'
+                })
+            
+            discovered_tables.append({
+                'name': table.get('table_name'),
+                'columns': [col.get('name') for col in table.get('columns', [])],
+                'query_template': f"SELECT * FROM {table.get('table_name')}",
+                'sample_count': 3,
+                'foreign_keys': foreign_keys,
+                'indexes': indexes,
+                'primary_keys': primary_keys
+            })
+        
+        logger.info(f"✓ Discovered {len(discovered_tables)} tables from database {database_id}")
+        return jsonify({'success': True, 'data': discovered_tables}), 200
+    
+    except Exception as e:
+        logger.error(f"Error discovering tables: {str(e)}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/settings/database/table-relationships', methods=['POST'])
+def get_table_relationships():
+    """Get foreign key relationships for a specific table."""
+    try:
+        data = request.json or {}
+        database_id = data.get('database_id')
+        table_name = data.get('table_name')
+        
+        if not database_id or not table_name:
+            return jsonify({'error': 'database_id and table_name are required'}), 400
+        
+        # Get the database setting from RAG
+        all_settings = settings_service.get_database_settings() or []
+        db_setting = next((s for s in all_settings if s.get('id') == database_id), None)
+        
+        if not db_setting:
+            return jsonify({'error': 'Database setting not found'}), 404
+        
+        # Build connection string
+        connection_string = settings_service._build_connection_string(db_setting)
+        
+        # Get schema from database
+        db_connector = DatabaseConnector()
+        schema = db_connector.get_schema(connection_string)
+        
+        # Find relationships for this table
+        relationships = {
+            'table': table_name,
+            'referenced_by': [],  # Tables that reference this table
+            'references': [],      # Tables this table references
+            'all_tables': []       # All table names for building WHERE conditions
+        }
+        
+        # Get all table names
+        relationships['all_tables'] = [t.get('table_name') for t in schema.get('tables', [])]
+        
+        # Find the current table
+        current_table = None
+        for table in schema.get('tables', []):
+            if table.get('table_name') == table_name:
+                current_table = table
+                break
+        
+        if not current_table:
+            return jsonify({'error': f'Table {table_name} not found'}), 404
+        
+        # Find tables this table references (outgoing relationships)
+        for fk in current_table.get('foreign_keys', []):
+            references_table = fk.get('referred_table')
+            if references_table:
+                column = fk.get('constrained_columns', [''])[0] if fk.get('constrained_columns') else ''
+                referred_column = fk.get('referred_columns', [''])[0] if fk.get('referred_columns') else ''
+                relationships['references'].append({
+                    'table': references_table,
+                    'local_column': column,
+                    'remote_column': referred_column
+                })
+        
+        # Find tables that reference this table (incoming relationships)
+        for table in schema.get('tables', []):
+            for fk in table.get('foreign_keys', []):
+                if fk.get('referred_table') == table_name:
+                    local_table = table.get('table_name')
+                    column = fk.get('constrained_columns', [''])[0] if fk.get('constrained_columns') else ''
+                    referred_column = fk.get('referred_columns', [''])[0] if fk.get('referred_columns') else ''
+                    relationships['referenced_by'].append({
+                        'table': local_table,
+                        'local_column': column,
+                        'remote_column': referred_column
+                    })
+        
+        logger.info(f"✓ Found relationships for table {table_name}: {len(relationships['references'])} references + {len(relationships['referenced_by'])} referenced_by")
+        return jsonify({'success': True, 'data': relationships}), 200
+    
+    except Exception as e:
+        logger.error(f"Error getting table relationships: {str(e)}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/rag/ingest/config', methods=['POST'])
+def configure_table_ingestion():
+    """
+    Configure ingestion for specific tables.
+    
+    Accepts configuration with processing method (raw or semantic) and related table settings.
+    """
+    try:
+        data = request.json or {}
+        database_id = data.get('database_id')
+        tables_config = data.get('tables', [])  # List of table configs
+        processing_method = data.get('processing_method', 'semantic')  # 'raw' or 'semantic'
+        
+        if not database_id or not tables_config:
+            return jsonify({'error': 'database_id and tables are required'}), 400
+        
+        # Store ingestion configuration in RAG
+        config = {
+            'database_id': database_id,
+            'processing_method': processing_method,
+            'tables': tables_config,
+            'created_at': datetime.now().isoformat(),
+            'status': 'configured'
+        }
+        
+        # Save to settings service or RAG database
+        config_id = str(uuid.uuid4())
+        settings_service.rag_db.save_setting(
+            f"ingest_config_{config_id}",
+            {
+                'id': config_id,
+                'database_id': database_id,
+                'config': config,
+                'meta_type': 'ingestion_config'
+            }
+        )
+        
+        logger.info(f"✓ Configured ingestion for {len(tables_config)} tables in database {database_id}")
+        return jsonify({
+            'success': True,
+            'config_id': config_id,
+            'tables_configured': len(tables_config)
+        }), 200
+    
+    except Exception as e:
+        logger.error(f"Error configuring ingestion: {str(e)}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/rag/ingest/start', methods=['POST'])
+def start_table_ingestion():
+    """
+    Start data ingestion from configured tables.
+    
+    Pulls data from source, detects relationships, generates embeddings, stores raw data.
+    """
+    try:
+        from backend.services.ingestion_pipeline import IngestionPipeline
+        
+        data = request.json or {}
+        database_id = data.get('database_id')
+        table_names = data.get('tables', [])
+        config_id = data.get('config_id')
+        
+        if not database_id:
+            return jsonify({'error': 'database_id is required'}), 400
+        
+        # Get database setting
+        all_settings = settings_service.get_database_settings() or []
+        db_setting = next((s for s in all_settings if s.get('id') == database_id), None)
+        
+        if not db_setting:
+            return jsonify({'error': 'Database setting not found'}), 404
+        
+        # Get ingestion config if provided
+        ingest_config = {}
+        if config_id:
+            try:
+                ingest_config = settings_service.rag_db.get_setting(f"ingest_config_{config_id}")
+            except:
+                pass
+        
+        # Initialize ingestion pipeline
+        pipeline = IngestionPipeline()
+        results = []
+        
+        # Ingest each table
+        for table_name in table_names:
+            try:
+                table_config = next(
+                    (t for t in ingest_config.get('config', {}).get('tables', []) 
+                     if t.get('name') == table_name),
+                    {'name': table_name, 'columns': [], 'query_template': f"SELECT * FROM {table_name}"}
+                )
+                
+                processing_method = ingest_config.get('config', {}).get('processing_method', 'semantic')
+                
+                # Use extended ingestion method
+                result = pipeline.ingest_table_with_processing(
+                    db_setting,
+                    table_config,
+                    embeddings_method=processing_method
+                )
+                results.append(result)
+                
+            except Exception as e:
+                logger.error(f"Error ingesting table {table_name}: {e}")
+                results.append({
+                    'status': 'error',
+                    'table': table_name,
+                    'message': str(e)
+                })
+        
+        # Summary
+        successful = sum(1 for r in results if r.get('status') == 'success')
+        total_records = sum(r.get('records_ingested', 0) for r in results)
+        total_embeddings = sum(r.get('embeddings_generated', 0) for r in results)
+        
+        logger.info(f"✓ Ingestion complete: {successful}/{len(results)} tables, {total_records} records, {total_embeddings} embeddings")
+        
+        return jsonify({
+            'success': True,
+            'status': 'completed',
+            'tables_processed': len(results),
+            'successful_tables': successful,
+            'total_records': total_records,
+            'total_embeddings': total_embeddings,
+            'details': results
+        }), 200
+    
+    except Exception as e:
+        logger.error(f"Error starting ingestion: {str(e)}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/rag/ingest/delete/<database_id>', methods=['DELETE'])
+def delete_ingested_data(database_id):
+    """Delete all ingested data for a database."""
+    try:
+        settings_service.rag_db._delete_ingested_data_for_database(database_id)
+        logger.info(f"✓ Deleted all ingested data for database {database_id}")
+        return jsonify({'success': True, 'message': 'Ingested data deleted'}), 200
+    except Exception as e:
+        logger.error(f"Error deleting ingested data: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/rag/ingest/manual', methods=['POST'])
+def manual_ingest_trigger():
+    """Manually trigger ingestion for all configured tables in a database."""
+    try:
+        data = request.json or {}
+        database_id = data.get('database_id')
+        
+        if not database_id:
+            return jsonify({'error': 'database_id is required'}), 400
+        
+        # Get the database setting from RAG
+        from backend.services.ingestion_pipeline import IngestionPipeline
+        
+        all_settings = settings_service.get_database_settings() or []
+        db_setting = next((s for s in all_settings if s.get('id') == database_id), None)
+        
+        if not db_setting:
+            return jsonify({'error': 'Database setting not found'}), 404
+        
+        # Initialize ingestion pipeline
+        pipeline = IngestionPipeline()
+        
+        # Ingest all selected tables for this database
+        result = pipeline.ingest_database(db_setting)
+        
+        logger.info(f"✓ Manual ingestion completed for database {database_id}")
+        return jsonify({'success': True, 'data': result}), 200
+        
+    except Exception as e:
+        logger.error(f"Error in manual ingestion: {str(e)}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/rag/ingest/status', methods=['POST'])
+def ingest_status():
+    """Get status of ingested data for a database."""
+    try:
+        data = request.json or {}
+        database_id = data.get('database_id')
+        
+        if not database_id:
+            return jsonify({'error': 'database_id is required'}), 400
+        
+        # Try to get ingestion status from RAG
+        try:
+            status = settings_service.rag_db.get_database_setting(f'ingest_status_{database_id}')
+            if status:
+                return jsonify({
+                    'success': True,
+                    'data': status
+                }), 200
+        except:
+            pass
+        
+        # Alternative: check filesystem for ingested data
+        import os
+        import json
+        from pathlib import Path
+        
+        ingested_dir = Path('instance/ingested_data') / database_id
+        ingested_data = {
+            'database_id': database_id,
+            'total_records': 0,
+            'tables_ingested': 0,
+            'ingested_tables': [],
+            'storage_path': str(ingested_dir),
+            'exists': ingested_dir.exists(),
+            'sample_embeddings': [],
+            'sample_rules': []
+        }
+        
+        if ingested_dir.exists():
+            for file in ingested_dir.glob('*_records.json'):
+                try:
+                    with open(file, 'r') as f:
+                        records = json.load(f)
+                    table_name = file.stem.replace('_records', '')
+                    record_count = len(records) if isinstance(records, list) else 1
+                    ingested_data['total_records'] += record_count
+                    ingested_data['tables_ingested'] += 1
+                    ingested_data['ingested_tables'].append({
+                        'name': table_name,
+                        'records_ingested': record_count,
+                        'file': file.name
+                    })
+                    
+                    # Collect first few records as sample embeddings
+                    if isinstance(records, list) and len(ingested_data['sample_embeddings']) < 3:
+                        for record in records[:3]:
+                            if isinstance(record, dict):
+                                sample_item = {
+                                    'id': f"{table_name}_{record.get('id', 'unknown')}",
+                                    'content': json.dumps(record)[:100],
+                                    'table': table_name
+                                }
+                                ingested_data['sample_embeddings'].append(sample_item)
+                except:
+                    pass
+        
+        # Get sample rules with embeddings from rules.json
+        try:
+            rules_file = Path('instance/rag_db/rules.json')
+            if rules_file.exists():
+                with open(rules_file, 'r', encoding='utf-8') as f:
+                    rules = json.load(f)
+                
+                # Filter rules for this database and get sample embeddings
+                db_rules = [r for r in rules if database_id in r.get('id', '')]
+                for rule in db_rules[:3]:  # Get first 3
+                    rule_sample = {
+                        'id': rule.get('id', 'unknown')[:50],
+                        'content': rule.get('content', '')[:150],
+                        'has_embedding': rule.get('embedding') is not None,
+                        'embedding_dims': len(rule.get('embedding', [])) if rule.get('embedding') else 0
+                    }
+                    ingested_data['sample_rules'].append(rule_sample)
+        except:
+            pass
+        
+        # Get last ingestion time if available
+        timestamp_file = ingested_dir / 'last_ingestion.txt'
+        if timestamp_file.exists():
+            try:
+                with open(timestamp_file, 'r') as f:
+                    ingested_data['last_ingestion'] = f.read().strip()
+            except:
+                pass
+        
+        return jsonify({
+            'success': True,
+            'data': ingested_data
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error getting ingestion status: {str(e)}", exc_info=True)
         return jsonify({'error': str(e)}), 500
 
 
@@ -747,7 +1202,20 @@ def health_check():
 
 @app.route('/api/rag/populate', methods=['POST'])
 def populate_rag():
-    """Populate RAG with database schema on first connection."""
+    """
+    Manually populate RAG with database schema (usually automatic).
+    
+    NOTE: RAG population happens AUTOMATICALLY when you:
+    1. Create a new database connection with is_active=True, OR
+    2. Update an existing database to is_active=True
+    
+    This endpoint is a FALLBACK for manual RAG re-population if needed.
+    
+    POST body should include:
+    {
+        "database_id": "uuid of the database"
+    }
+    """
     try:
         database_id = request.json.get('database_id')
         if not database_id:
@@ -761,7 +1229,7 @@ def populate_rag():
             logger.warning(f"Database setting not found: {database_id}")
             return jsonify({'status': 'error', 'message': 'Database not found'}), 404
         
-        logger.info(f"→ Populating RAG for database: {db_setting.get('name')}")
+        logger.info(f"→ MANUAL: Populating RAG for database: {db_setting.get('name')}")
         
         # Use settings_service to populate RAG (which calls _populate_rag_schema)
         settings_service._populate_rag_schema(db_setting)
@@ -786,10 +1254,10 @@ def get_rag_items():
         
         data = [{
             'id': schema['id'],
-            'category': schema['category'],
-            'title': schema['title'],
+            'category': schema['metadata'].get('category', schema['metadata'].get('table_name', '')),
+            'title': schema['metadata'].get('table_name', ''),
             'content': schema['content'],
-            'type': schema['type'],
+            'type': schema['metadata'].get('type', 'schema'),
         } for schema in schemas]
         
         logger.info(f"✓ GET /api/rag/items: {len(data)} schemas from ChromaDB")
@@ -800,7 +1268,7 @@ def get_rag_items():
         }), 200
     
     except Exception as e:
-        logger.error(f"Error fetching RAG items: {str(e)}")
+        logger.error(f"Error fetching RAG items: {str(e)}", exc_info=True)
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 

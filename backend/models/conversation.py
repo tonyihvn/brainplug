@@ -1,6 +1,6 @@
 """Conversation and Message models."""
 from datetime import datetime
-from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy import JSON
 from backend.models import db
 
 
